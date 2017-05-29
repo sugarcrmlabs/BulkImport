@@ -337,4 +337,4 @@ Please check out our [Contribution Guidelines](CONTRIBUTING.md) for helpful hint
 
 
 -----
-Copyright (c) 2016 SugarCRM Inc. Licensed by SugarCRM under the Apache 2.0 license.
+Copyright (c) 2017 SugarCRM Inc. Licensed by SugarCRM under the Apache 2.0 license.
