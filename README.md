@@ -14,7 +14,7 @@ Please note that this sample code is not provided as an installable module, as e
 - Create custom files/logic for module level special mappings after and before the save is processed wherever required (some samples are provided for Accounts, Contacts and Users on the current code)
 - Create valid `config_override.php` settings to enable the custom API on a module per module level
 
-<strong>Note that when the external keys custom fields are created (eg: ext_key_c), there has to be the matching (eg: CREATE INDEX idx_users_ext_key ON users_cstm (ext_key_c); ) or the performance will terribly suffer while completing the lookups.</strong>
+<strong>Note that when the custom fields for the external keys are created (eg: ext_key_c), there has to be the matching (eg: CREATE INDEX idx_users_ext_key ON users_cstm (ext_key_c); ) or the performance will terribly suffer while completing the lookups.</strong>
 
 ### Sample config_override.php
 ```
