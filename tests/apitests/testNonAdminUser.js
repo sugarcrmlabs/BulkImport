@@ -33,11 +33,11 @@ describe('bulkapi', function() {
                 'password': this.userDetails.user_hash,
                 'client_id': 'sugar',
                 'platform': 'base',
-                'client_secret': '',
+                'client_secret': ''
             },
             {
                 headers: {
-                    'X-Thorn': 'ManualLogin ' + this.userDetails.user_name,
+                    'X-Thorn': 'ManualLogin ' + this.userDetails.user_name
                 }
             }
         );
@@ -61,8 +61,8 @@ describe('bulkapi', function() {
             {
                 headers: {
                     'X-Thorn': 'ManualBulkContactCreation',
-                    'OAuth-Token': response.body.access_token,
-                },
+                    'OAuth-Token': response.body.access_token
+                }
             }
         );
 

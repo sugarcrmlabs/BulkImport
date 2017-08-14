@@ -13,11 +13,11 @@ describe('bulkapi', function() {
                 'password': process.env.THORN_ADMIN_PASSWORD,
                 'client_id': 'sugar',
                 'platform': 'base',
-                'client_secret': '',
+                'client_secret': ''
             },
             {
                 headers: {
-                    'X-Thorn': 'ManualAdminLogin',
+                    'X-Thorn': 'ManualAdminLogin'
                 }
             }
         );
@@ -35,8 +35,8 @@ describe('bulkapi', function() {
             {
                 headers: {
                     'X-Thorn': 'ManualBulkError',
-                    'OAuth-Token': this.token,
-                },
+                    'OAuth-Token': this.token
+                }
             }
         );
 
@@ -54,8 +54,8 @@ describe('bulkapi', function() {
             {
                 headers: {
                     'X-Thorn': 'ManualBulkError',
-                    'OAuth-Token': this.token,
-                },
+                    'OAuth-Token': this.token
+                }
             }
         );
 
