@@ -243,13 +243,11 @@ class BulkImport
         $external_rel_keys = $this->getExternalRelationshipKeys($args['module'], $args['linkfield']);
 
         if(!empty($external_rel_keys) && !empty($record[$external_rel_keys['external_key_field_left']]) && !empty($record[$external_rel_keys['external_key_field_right']])) {
-            // retrieve the left record
-            $sugar_id_right = '';
+            // retrieve the records
             $sugar_id_left = $this->getSugarRecordId($leftbean, $record[$external_rel_keys['external_key_field_left']]);
+            $sugar_id_right = $this->getSugarRecordId($rightbean, $record[$external_rel_keys['external_key_field_right']]);
 
             if(!empty($sugar_id_left)) {
-                $sugar_id_right = $this->getSugarRecordId($rightbean, $record[$external_rel_keys['external_key_field_right']]);
-
                 if(!empty($sugar_id_right)) {
                     $b = BeanFactory::getBean($leftbean->module_name, $sugar_id_left);
 
@@ -288,7 +286,7 @@ class BulkImport
                             'external_key_left' => $record[$external_rel_keys['external_key_field_left']],
                             'sugar_id_left' => '',
                             'external_key_right' => $record[$external_rel_keys['external_key_field_right']],
-                            'sugar_id_right' => '',
+                            'sugar_id_right' => $sugar_id_right,
                         )
                     )
                 );
