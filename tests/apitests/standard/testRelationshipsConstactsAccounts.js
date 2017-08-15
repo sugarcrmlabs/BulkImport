@@ -40,6 +40,23 @@ describe('bulkapi', function() {
 
         let response = yield Agent.as(Agent.ADMIN).post('BulkImport/records/Accounts', { records: this.accounts });
 
+        expect(response).to.have.status(200);
+        expect(response.body.count).to.not.be.empty;
+        expect(response.body.count.created).to.not.be.empty;
+        expect(response.body.count.created).to.be.equal(2);
+        expect(response.body.count.updated).to.be.empty;
+        expect(response.body.count.warnings).to.be.empty;
+        expect(response.body.count.errors).to.be.empty;
+        expect(response.body.list).to.not.be.empty;
+        expect(response.body.list.created).to.not.be.empty;
+        expect(response.body.list.created[0].external_key).to.be.equal(this.accountnames[0]);
+        expect(response.body.list.created[1].external_key).to.be.equal(this.accountnames[1]);
+        expect(response.body.list.created[0].sugar_id).to.be.not.empty;
+        expect(response.body.list.created[1].sugar_id).to.be.not.empty;
+        expect(response.body.list.updated).to.be.empty;
+        expect(response.body.list.warnings).to.be.empty;
+        expect(response.body.list.errors).to.be.empty;
+
         this.accountId1 = response.body.list.created[0].sugar_id;
         this.accountId2 = response.body.list.created[1].sugar_id;
     });
@@ -114,6 +131,7 @@ describe('bulkapi', function() {
         expect(response.body.count.created).to.not.be.empty;
         expect(response.body.count.created).to.be.equal(3);
         expect(response.body.count.updated).to.be.empty;
+        expect(response.body.count.warnings).to.be.empty;
         expect(response.body.count.errors).to.be.empty;
         expect(response.body.list).to.not.be.empty;
         expect(response.body.list.created).to.not.be.empty;
@@ -124,6 +142,7 @@ describe('bulkapi', function() {
         expect(response.body.list.created[1].sugar_id).to.be.equal(this.contactdetails[1].id);
         expect(response.body.list.created[2].sugar_id).to.be.equal(this.contactdetails[2].id);
         expect(response.body.list.updated).to.be.empty;
+        expect(response.body.list.warnings).to.be.empty;
         expect(response.body.list.errors).to.be.empty;
     });
 
@@ -158,6 +177,37 @@ describe('bulkapi', function() {
         expect(response.body.list.related[1].external_key_right).to.be.equal(this.accountnames[1]);
         expect(response.body.list.related[0].sugar_id_right).to.be.equal(this.accountId1);
         expect(response.body.list.related[1].sugar_id_right).to.be.equal(this.accountId2);
+        expect(response.body.list.errors).to.be.empty;
+
+        // swap the relationships
+        this.relationships = [
+            {
+                left_external_key: this.contactdetails[0].id,
+                right_external_key: this.accountnames[1]
+            },
+            {
+                left_external_key: this.contactdetails[1].id,
+                right_external_key: this.accountnames[0]
+            }
+        ];
+
+        response = yield Agent.as(Agent.ADMIN).post('BulkImport/relationships/Contacts/accounts', { records: this.relationships });
+
+        expect(response).to.have.status(200);
+        expect(response.body.count).to.not.be.empty;
+        expect(response.body.count.related).to.not.be.empty;
+        expect(response.body.count.related).to.be.equal(2);
+        expect(response.body.count.errors).to.be.empty;
+        expect(response.body.list).to.not.be.empty;
+        expect(response.body.list.related).to.not.be.empty;
+        expect(response.body.list.related[0].external_key_left).to.be.equal(this.contactdetails[0].id);
+        expect(response.body.list.related[1].external_key_left).to.be.equal(this.contactdetails[1].id);
+        expect(response.body.list.related[0].sugar_id_left).to.be.equal(this.contactdetails[0].id);
+        expect(response.body.list.related[1].sugar_id_left).to.be.equal(this.contactdetails[1].id);
+        expect(response.body.list.related[0].external_key_right).to.be.equal(this.accountnames[1]);
+        expect(response.body.list.related[1].external_key_right).to.be.equal(this.accountnames[0]);
+        expect(response.body.list.related[0].sugar_id_right).to.be.equal(this.accountId2);
+        expect(response.body.list.related[1].sugar_id_right).to.be.equal(this.accountId1);
         expect(response.body.list.errors).to.be.empty;
     });
 
