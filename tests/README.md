@@ -38,7 +38,7 @@ $sugar_config['bulk_import_settings']['relationships']['Contacts']['accounts']['
 
 ### Customfields
 Tests to make sure the functionality works fine also leveraging custom fields to store external unique keys.<br />
-They do require everything mentioned on the Standard section, plus a custom field manually created with resulting name `externalkey_c` of type varchar 255 and finally the additional config options for config_override.php below.
+They do require everything mentioned on the Standard section, plus a custom field manually created with resulting name `externalkey_c` of type varchar 255 (TextField in Studio) and finally the additional config options for config_override.php below.
 Run the tests with: `docker run -v ${PWD}/apitests:/tests -t -i thorn ./runtest.sh https://myurl.com/sugar adminuser adminpass /tests/customfields/`
 
 #### config_override.php
@@ -51,5 +51,4 @@ $sugar_config['bulk_import_settings']['relationships']['Cases']['contacts']['ext
 $sugar_config['bulk_import_settings']['relationships']['Cases']['contacts']['external_key_field_right'] = 'right_external_key';
 $sugar_config['bulk_import_settings']['relationships']['Cases']['accounts']['external_key_field_left'] = 'left_external_key';
 $sugar_config['bulk_import_settings']['relationships']['Cases']['accounts']['external_key_field_right'] = 'right_external_key';
-`
 ```
