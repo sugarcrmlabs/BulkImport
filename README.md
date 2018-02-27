@@ -74,6 +74,8 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 - It is possible to upsert one record at the time only, by passing an array of records with only one record on the array. It is not recommended, as higher throughput can be achieved by passing multiple records
 - It is possible to pass the parameter `"skipUpdate":true` on the REST request to prevent any record updates (including if the matching record is deleted). This is useful if as an example the initial data load was interrupted mid way. This option would allow to quickly resume the inserting of records without processing any update of previously created records. This additional parameter does not apply to relationships but only to bean's records
 - Do not pass too many records at once to the API. Make sure every HTTP response does not take more than 15-20 seconds and monitor carefully the overall infrastructure load and the API response times
+- A maximum amount of records is configured by default to 100. It can be configured through the `config_override.php` option `$sugar_config['bulk_import_settings']['max_records']`
+- It is possible to impersonate another user for all the updates of the same request by passing on the payload the parameter `save_as_user_id` as the relevant user's guid
 
 ### API Call Examples
 
@@ -339,4 +341,4 @@ Please check out our [Contribution Guidelines](CONTRIBUTING.md) for helpful hint
 
 
 -----
-Copyright (c) 2017 SugarCRM Inc. Licensed by SugarCRM under the Apache 2.0 license.
+Copyright (c) 2018 SugarCRM Inc. Licensed by SugarCRM under the Apache 2.0 license.

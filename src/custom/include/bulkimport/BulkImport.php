@@ -7,8 +7,11 @@ class BulkImport
 {
     protected $import_settings = array();
     protected $response = array();
-    protected $previous_user = null;
+    protected $api_user = null;
 
+    /**
+     * Initiate BulkImport
+     */
     public function __construct()
     {
         $this->loadConfigSettings();
@@ -16,6 +19,7 @@ class BulkImport
     }
 
     /**
+     * Get response array
      * @return array
      */
     public function getResponseArray()
@@ -31,6 +35,7 @@ class BulkImport
     }
 
     /**
+     * Get import settings
      * @return array
      */
     public function getImportSettings()
@@ -39,6 +44,7 @@ class BulkImport
     }
 
     /**
+     * Get maximum record limit per request
      * @return int
      */
     public function getRecordLimit()
@@ -51,6 +57,49 @@ class BulkImport
     }
 
     /**
+     * Impersonate a user by his/her record id
+     * @param string $id
+     * @return bool
+     */
+    public function impersonateUserById($id = '')
+    {
+        global $current_user;
+        $GLOBALS['log']->info('Bulk Import - Impersonating user with id ' . $id . ' from id ' . $current_user->id); 
+        if (!empty($id) && empty($this->api_user)) {
+            // clone original user
+            $this->api_user = clone($current_user);
+            $user = BeanFactory::getBean('Users', $id);
+            // if the user was found
+            if (!empty($user) && !empty($user->id)) {
+                $current_user = $user;
+                $GLOBALS['log']->info('Bulk Import - Impersonated user with id ' . $current_user->id); 
+                return true;
+            }
+        }
+        $GLOBALS['log']->error('Bulk Import - Failed to impersonate user with id ' . $id . ' from id ' . $current_user->id); 
+        return false;
+    }
+
+    /**
+     * Restore the original admin user if present
+     * @return bool
+     */
+    public function restoreApiUser()
+    {
+        global $current_user;
+        if (!empty($this->api_user)) {
+            $GLOBALS['log']->info('Bulk Import - Restoring original api user from id ' . $current_user->id); 
+            // put back the user
+            $current_user = clone($this->api_user);
+            $this->api_user = null;
+            $GLOBALS['log']->info('Bulk Import - Restored original api user with id ' . $current_user->id); 
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Handle additional mapping before save
      * @param SugarBean $b
      * @param array $data
      * @param array $args
@@ -63,16 +112,19 @@ class BulkImport
             unset($b->password);
         }
 
-        // handle created by overriding
-        if (!empty($data['created_by'])) {
-            $b->created_by = $data['created_by'];
-            $b->set_created_by = false;
-        }
+        // only allow override, if we are not impersonating a user right now
+        if (empty($this->api_user)) {
+            // handle created by overriding
+            if (!empty($data['created_by'])) {
+                $b->created_by = $data['created_by'];
+                $b->set_created_by = false;
+            }
 
-        // handle modified user id overriding
-        if (!empty($data['modified_user_id'])) {
-            $b->modified_user_id = $data['modified_user_id'];
-            $b->update_modified_by = false;
+            // handle modified user id overriding
+            if (!empty($data['modified_user_id'])) {
+                $b->modified_user_id = $data['modified_user_id'];
+                $b->update_modified_by = false;
+            }
         }
 
         // handle date entered overriding
@@ -147,7 +199,7 @@ class BulkImport
                             );
                         } catch (Exception $e) {
                             $GLOBALS['log']->error(
-                                'Module ' . $args['module'] . ' update failed for ' .
+                                'Bulk Import - Module ' . $args['module'] . ' update failed for ' .
                                 'external record key ' . $external_key_field . ': ' . $record[$external_key_field] . ' and sugar id: ' . $b->id
                             );
                             $this->addToResponseArray('errors',
@@ -203,7 +255,7 @@ class BulkImport
                         );
                     } catch (Exception $e) {
                         $GLOBALS['log']->error(
-                            'Module ' . $args['module'] . ' creation of record failed for ' .
+                            'Bulk Import - Module ' . $args['module'] . ' creation of record failed for ' .
                             'external record key ' . $external_key_field . ': ' . $record[$external_key_field]
                         );
                         $this->addToResponseArray('errors',
@@ -222,7 +274,7 @@ class BulkImport
                     $this->handleAdditionalMappingAfterSave($b, $record, $args);
                 }
             } else {
-                $GLOBALS['log']->error('Module ' . $args['module'] . ' key: ' .$external_key_field. ' empty');
+                $GLOBALS['log']->error('Bulk Import - Module ' . $args['module'] . ' key: ' .$external_key_field. ' empty');
                 $this->addToResponseArray('errors',
                     array(
                         array(
@@ -321,7 +373,7 @@ class BulkImport
         // add more comprehensive logging to determine which records did not relate
         if ($current_error) {
             $GLOBALS['log']->error(
-                'Relationship import error due to missing record.' .
+                'Bulk Import - Relationship import error due to missing record.' .
                 ' Left Module: ' . $leftbean->module_name .
                 ' Left key: ' . $record[$external_rel_keys['external_key_field_left']] .
                 ' Left id: ' . $sugar_id_left .
@@ -333,7 +385,7 @@ class BulkImport
     }
 
     /**
-     * Check if the required arguments exists
+     * Check if the required arguments exist
      * @param $args
      */
     public function checkImportArgsForModules($args)
@@ -360,7 +412,7 @@ class BulkImport
         global $current_user;
 
         if (!$current_user->isAdmin()) {
-            $GLOBALS['log']->error('BulkImport API requires an Admin user');
+            $GLOBALS['log']->error('BulkImport - API requires an Admin user');
             throw new SugarApiExceptionNotAuthorized('BulkImport API requires an Admin user');
         }
     }
@@ -371,7 +423,7 @@ class BulkImport
      * @throws SugarApiExceptionInvalidParameter
      */
     public function parameterError($message) {
-        $GLOBALS['log']->error($message);
+        $GLOBALS['log']->error('Bulk Import - '.$message);
         throw new SugarApiExceptionInvalidParameter($message);
     }
 
@@ -381,13 +433,14 @@ class BulkImport
      */
     public function logExecutionTime($time) {
         if ($time > 30) {
-            $GLOBALS['log']->fatal('Slow execution time: ' . $time . '. Please reduce the number of records passed to the Bulk Import API at any one time'); 
+            $GLOBALS['log']->fatal('Bulk Import - Slow execution time: ' . $time . '. Please reduce the number of records passed to the Bulk Import API at any one time'); 
         } else {
-            $GLOBALS['log']->info('Finished, total execution time: ' . $time); 
+            $GLOBALS['log']->info('Bulk Import - Finished, total execution time: ' . $time); 
         }
     }   
 
     /**
+     * Get allowed relationship modules
      * @return array
      */
     public function getAllowedRelationshipModules() {
@@ -399,6 +452,8 @@ class BulkImport
     }
 
     /**
+     * Retrieves allowed relationship link fields for a module
+     * @param string $module
      * @return array
      */
     public function getAllowedRelationshipLinkfields($module) {
@@ -410,6 +465,7 @@ class BulkImport
     }
 
     /**
+     * Retrieves a Sugar record id by executing a SQL lookup, based on the predefined configuration query
      * @param SugarBean $b
      * @param string $lookup_id
      * @return false|string
@@ -432,6 +488,7 @@ class BulkImport
     }
 
     /**
+     * Handles custom after save
      * @param SugarBean $b
      * @param array $data
      * @param array $args
@@ -443,6 +500,7 @@ class BulkImport
     }
 
     /**
+     * Handles many to many relationship
      * @param SugarBean $b
      * @param array $data
      * @param array $args
@@ -514,6 +572,9 @@ class BulkImport
         }
     }
 
+    /**
+     * Initiate response array
+     */
     private function initiateResponseArray()
     {
         $this->response = array();
@@ -532,6 +593,11 @@ class BulkImport
         $this->response['list']['errors'] = array();
     }
 
+    /**
+     * Add the current information to the response array
+     * @param string $list_type
+     * @param array $list
+     */
     private function addToResponseArray($list_type, $list)
     {
         if (!empty($list_type) && !empty($list)) {
@@ -545,6 +611,7 @@ class BulkImport
     }
 
     /**
+     * Check if all the properties of a record passed are empty
      * @param array $record
      * @return bool
      */
@@ -560,6 +627,9 @@ class BulkImport
         return true;
     }
 
+    /**
+     * Load configuration
+     */
     private function loadConfigSettings() {
         $this->import_settings = SugarConfig::getInstance()->get('bulk_import_settings');
 
@@ -588,6 +658,7 @@ class BulkImport
     }
 
     /**
+     * Get allowed import modules
      * @return array
      */
     private function getAllowedModules() {
@@ -595,6 +666,7 @@ class BulkImport
     }
 
     /**
+     * Get external relationship keys
      * @param string $module
      * @param string $linkfield
      * @return array
@@ -608,8 +680,9 @@ class BulkImport
     }
 
     /**
+     * Get sugar key field name for module (as in the db field)
      * @param string $module
-     * @return string|void
+     * @return string
      */
     private function getSugarKeyFieldForModule($module) {
         if (!empty($module) && !empty($this->import_settings['modules'][$module]['sugar_key_field'])) {
@@ -620,6 +693,7 @@ class BulkImport
     }
 
     /**
+     * Get external key field name for module (as in the field passed in the request)
      * @param string $module
      * @return string|void
      */
@@ -632,6 +706,7 @@ class BulkImport
     }
 
     /**
+     * Get SQL query for the lookup, based on configuration settings
      * @param string $module
      * @return string|void
      */
@@ -644,6 +719,7 @@ class BulkImport
     }
 
     /**
+     * Call custom logic either before or after save, if configured
      * @param SugarBean $b
      * @param array $data
      * @param array $args
