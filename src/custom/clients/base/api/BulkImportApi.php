@@ -40,7 +40,7 @@ class BulkImportApi extends SugarApi
     }
 
     protected function bulk() {
-        if(empty($this->bulkImportObject)) {
+        if (empty($this->bulkImportObject)) {
             $this->bulkImportObject = new BulkImport();
         }
         return $this->bulkImportObject;
@@ -56,28 +56,40 @@ class BulkImportApi extends SugarApi
         // disable activity stream
         Activity::disable();
 
-        $GLOBALS['log']->info('Bulk Import resource: ' . $args['__sugar_url']);
+        $GLOBALS['log']->info('Bulk Import - resource: ' . $args['__sugar_url']);
 
         $this->bulk()->checkImportArgsForModules($args);
 
         // one bean for all the lookup loop
         $samplebean = BeanFactory::getBean($args['module']);
 
-        if(!isset($samplebean)) {
+        if (!isset($samplebean)) {
             $this->bulk()->parameterError('Lookup Bean ' . $args['module'] . ' load failed');
         }
 
-        if(!empty($args['records'] && is_array($args['records']))) {
+        if (!empty($args['records'] && is_array($args['records']))) {
+            if (count($args['records']) > $this->bulk()->getRecordLimit()) {
+                $this->bulk()->parameterError('The request contains too many records. Please provide less than ' . $this->bulk()->getRecordLimit() . ' records per call');
+            }
+
+            // do we need to impersonate?
+            if (!empty($args['save_as_user_id'])) {
+                $this->bulk()->impersonateUserById($args['save_as_user_id']);
+            }
+
             foreach ($args['records'] as $record) {
                 $this->bulk()->handleRecordSave($record, $samplebean, $args);
             }
+
+            // restore user (only happens if it was impersonated)
+            $this->bulk()->restoreApiUser();
         } else {
-            $this->bulk()->parameterError('Bulk Import requires an array of records as input');
+            $this->bulk()->parameterError('An array of records is required as input');
         }
 
         $this->bulk()->logExecutionTime((microtime(true) - $total_t_start));
 
-        $GLOBALS['log']->info('Bulk Import API records processed in : ' . (microtime(true) - $total_t_start) . ' seconds. '. print_r($this->bulk()->getResponseArray(), true));
+        $GLOBALS['log']->info('Bulk Import - API records processed in : ' . (microtime(true) - $total_t_start) . ' seconds. '. print_r($this->bulk()->getResponseArray(), true));
 
         return $this->bulk()->getResponseArray();
     }
@@ -92,35 +104,35 @@ class BulkImportApi extends SugarApi
         // disable activity stream
         Activity::disable();
 
-        $GLOBALS['log']->info('Bulk Import resource: ' . $args['__sugar_url']);
+        $GLOBALS['log']->info('Bulk Import - resource: ' . $args['__sugar_url']);
 
-        if(empty($args['linkfield']) || empty($args['module']) || empty($args['records'])) {
+        if (empty($args['linkfield']) || empty($args['module']) || empty($args['records'])) {
             $this->bulk()->parameterError(
-                'Following parameters are empty: ' .
+                'The following parameters are empty: ' .
                 (empty($args['module']) ? 'Module' : '') .
                 (empty($args['linkfield']) ? 'Link Field' : '') .
                 (empty($args['records']) ? ', Records' : '')
             );
         }
 
-        if(!in_array($args['module'], $this->bulk()->getAllowedRelationshipModules())) {
+        if (!in_array($args['module'], $this->bulk()->getAllowedRelationshipModules())) {
             $this->bulk()->parameterError('Relationship\'s module ' . $args['module'] . ' not allowed');
         }
 
-        if(!in_array($args['linkfield'], $this->bulk()->getAllowedRelationshipLinkfields($args['module']))) {
+        if (!in_array($args['linkfield'], $this->bulk()->getAllowedRelationshipLinkfields($args['module']))) {
             $this->bulk()->parameterError('Relationship\'s linkfield ' . $args['linkfield'] . ' not allowed');
         }
 
         // one bean for all the lookup loop
         $sampleleftbean = BeanFactory::getBean($args['module']);
-        if(!isset($sampleleftbean)) {
-            $this->bulk()->parameterError('Relationship Left Lookup Bean: ' . $args['module'] . ' load failed');
+        if (!isset($sampleleftbean)) {
+            $this->bulk()->parameterError('Relationship left lookup bean: ' . $args['module'] . ' load failed');
         }
 
         // find the right side bean and load it
         $sampleleftbean->load_relationship($args['linkfield']);
-        if(!empty($sampleleftbean->{$args['linkfield']})) {
-            if($sampleleftbean->{$args['linkfield']}->getRelationshipObject()->getRHSModule() == $args['module']) {
+        if (!empty($sampleleftbean->{$args['linkfield']})) {
+            if ($sampleleftbean->{$args['linkfield']}->getRelationshipObject()->getRHSModule() == $args['module']) {
                 $right_module = $sampleleftbean->{$args['linkfield']}->getRelationshipObject()->getLHSModule();
             } else {
                 $right_module = $sampleleftbean->{$args['linkfield']}->getRelationshipObject()->getRHSModule();
@@ -128,21 +140,38 @@ class BulkImportApi extends SugarApi
             $samplerightbean = BeanFactory::getBean($right_module);
         }
 
-        if(!isset($samplerightbean)) {
-            $this->bulk()->parameterError('Relationship Right Lookup Bean failed for module '.$args['module'].' with link field '.$args['linkfield']);
+        if (!isset($samplerightbean)) {
+            $this->bulk()->parameterError('Relationship right lookup bean failed for module '.$args['module'].' with link field '.$args['linkfield']);
         }
 
-        if(!empty($args['records'] && is_array($args['records']))) {
+        if (!empty($args['records'] && is_array($args['records']))) {
+            if (count($args['records']) > $this->bulk()->getRecordLimit()) {
+                $this->bulk()->parameterError('The request contains too many records. Please provide less than ' . $this->bulk()->getRecordLimit() . ' records per call');
+            }
+
+            // do we need to impersonate?
+            $user_restore_required = false;
+            if (!empty($args['save_as_user_id'])) {
+                if ($this->bulk()->impersonateUserById($args['save_as_user_id'])) {
+                    $user_restore_required = true;
+                }
+            }
+
             foreach ($args['records'] as $record) {
                 $this->bulk()->handleRelationshipSave($record, $sampleleftbean, $samplerightbean, $args);
             }
+
+            if ($user_restore_required) {
+                // restore user
+                $this->bulk()->restoreApiUser();
+            }
         } else {
-            $this->bulk()->parameterError('Bulk Import requires an array of records as input');
+            $this->bulk()->parameterError('An array of records is required as input');
         }
 
         $this->bulk()->logExecutionTime((microtime(true) - $total_t_start));
 
-        $GLOBALS['log']->info('Bulk Import API records processed in : ' . (microtime(true) - $total_t_start) . ' seconds. '. print_r($this->bulk()->getResponseArray(), true));
+        $GLOBALS['log']->info('Bulk Import - API records processed in : ' . (microtime(true) - $total_t_start) . ' seconds. '. print_r($this->bulk()->getResponseArray(), true));
 
         return $this->bulk()->getResponseArray();
     }
