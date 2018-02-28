@@ -65,7 +65,7 @@ class BulkImport
     {
         global $current_user;
         $GLOBALS['log']->info('Bulk Import - Impersonating user with id ' . $id . ' from id ' . $current_user->id); 
-        if (!empty($id) && empty($this->api_user)) {
+        if (!empty($id) && empty($this->api_user) && $current_user->isAdmin()) {
             // clone original user
             $this->api_user = clone($current_user);
             $user = BeanFactory::getBean('Users', $id);
