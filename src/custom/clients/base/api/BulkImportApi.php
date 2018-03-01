@@ -150,21 +150,16 @@ class BulkImportApi extends SugarApi
             }
 
             // do we need to impersonate?
-            $user_restore_required = false;
             if (!empty($args['save_as_user_id'])) {
-                if ($this->bulk()->impersonateUserById($args['save_as_user_id'])) {
-                    $user_restore_required = true;
-                }
+                $this->bulk()->impersonateUserById($args['save_as_user_id']);
             }
 
             foreach ($args['records'] as $record) {
                 $this->bulk()->handleRelationshipSave($record, $sampleleftbean, $samplerightbean, $args);
             }
 
-            if ($user_restore_required) {
-                // restore user
-                $this->bulk()->restoreApiUser();
-            }
+            // restore user (only happens if it was impersonated)
+            $this->bulk()->restoreApiUser();
         } else {
             $this->bulk()->parameterError('An array of records is required as input');
         }
