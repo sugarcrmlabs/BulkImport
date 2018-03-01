@@ -24,8 +24,8 @@ class BulkImportApi extends SugarApi
                 'pathVars' => array('', '', 'module'),
                 'method' => 'bulkImport',
                 'minVersion' => 10,
-                'maxVersion' => 10,
-                'shortHelp' => 'Admin Only - POST BulkImport/records/:module post a list {"records":[]}',
+                'maxVersion' => 11,
+                'shortHelp' => 'Admin Only - POST BulkImport/records/:module post a list of {"records":[]}',
             ),
             array(
                 'reqType' => 'POST',
@@ -33,8 +33,8 @@ class BulkImportApi extends SugarApi
                 'pathVars' => array('', '', 'module', 'linkfield'),
                 'method' => 'bulkImportRelationship',
                 'minVersion' => 10,
-                'maxVersion' => 10,
-                'shortHelp' => 'Admin Only - POST BulkImport/relationships/:module/:linkfield post list {"records":[]} with left external key and right external key',
+                'maxVersion' => 11,
+                'shortHelp' => 'Admin Only - POST BulkImport/relationships/:module/:linkfield post a list of {"records":[]} with left external key and right external key',
             ),
         );
     }
