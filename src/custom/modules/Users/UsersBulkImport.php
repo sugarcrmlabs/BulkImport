@@ -7,7 +7,7 @@ require_once('custom/include/bulkimport/BulkImport.php');
 
 class UsersBulkImport extends BulkImport
 {
-    public function usersAfterSave($b, $data, $args)
+    public function callCustomAfterSave($b, $data, $args)
     {
         // do nothing, this is just an example
     }

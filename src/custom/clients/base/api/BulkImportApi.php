@@ -19,7 +19,7 @@ class BulkImportApi extends SugarApi
     {
         return array(
             array(
-                'reqType' => 'POST',
+                'reqType' => array('POST', 'PUT'),
                 'path' => array('BulkImport', 'records', '?'),
                 'pathVars' => array('', '', 'module'),
                 'method' => 'bulkImport',
@@ -28,7 +28,7 @@ class BulkImportApi extends SugarApi
                 'shortHelp' => 'Admin Only - POST BulkImport/records/:module post a list of {"records":[]}',
             ),
             array(
-                'reqType' => 'POST',
+                'reqType' => array('POST', 'PUT'),
                 'path' => array('BulkImport', 'relationships', '?', '?'),
                 'pathVars' => array('', '', 'module', 'linkfield'),
                 'method' => 'bulkImportRelationship',

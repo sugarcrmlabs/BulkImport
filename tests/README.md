@@ -22,10 +22,8 @@ $sugar_config['bulk_import_settings']['modules']['Users']['external_key_field'] 
 $sugar_config['bulk_import_settings']['modules']['Users']['sql_query'] = 'select id from users where user_name = ?';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['file'] = 'custom/modules/Accounts/AccountsBulkImport.php';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['class'] = 'AccountsBulkImport';
-$sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['method'] = 'accountsBeforeSave';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['file'] = 'custom/modules/Contacts/ContactsBulkImport.php';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['class'] = 'ContactsBulkImport';
-$sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['method'] = 'contactsBeforeSave';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['sugar_key_field'] = 'name';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['external_key_field'] = 'external_key';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['sql_query'] = 'select id from accounts where name = ?';
