@@ -25,13 +25,10 @@ $sugar_config['bulk_import_settings']['modules']['Users']['external_key_field'] 
 $sugar_config['bulk_import_settings']['modules']['Users']['sql_query'] = 'select id_c from users_cstm where ext_key_c = ?';
 $sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['file'] = 'custom/modules/Users/UsersBulkImport.php';
 $sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['class'] = 'UsersBulkImport';
-$sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['method'] = 'usersAfterSave';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['file'] = 'custom/modules/Accounts/AccountsBulkImport.php';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['class'] = 'AccountsBulkImport';
-$sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['method'] = 'accountsBeforeSave';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['file'] = 'custom/modules/Contacts/ContactsBulkImport.php';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['class'] = 'ContactsBulkImport';
-$sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['method'] = 'contactsBeforeSave';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['sugar_key_field'] = 'ext_key_c';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['external_key_field'] = 'external_key';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['sql_query'] = 'select id_c from accounts_cstm where ext_key_c = ?';
@@ -54,7 +51,6 @@ $sugar_config['bulk_import_settings']['modules'][<sugar module name>]['sql_query
 
 $sugar_config['bulk_import_settings']['modules'][<sugar module name>][<custom_after_save or custom_before_save>]['file'] = 'custom/modules/Accounts/AccountsBulkImport.php'; // OPTIONAL - path of custom file to load for the module
 $sugar_config['bulk_import_settings']['modules'][<sugar module name>][<custom_after_save or custom_before_save>]['class'] = 'AccountsBulkImport'; // OPTIONAL - class to instantiate
-$sugar_config['bulk_import_settings']['modules'][<sugar module name>][<custom_after_save or custom_before_save>]['method'] = 'accountsBeforeSave'; // OPTIONAL - method to execute
 
 $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sugar link field of relationship>]['external_key_field_left'] = 'left_external_key'; // REQUIRED - external key for the main module
 $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sugar link field of relationship>]['external_key_field_right'] = 'right_external_key'; // REQUIRED - external key for the related module
@@ -68,7 +64,8 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 - When writing queries, the system expects to select only one field, either the `id` or `id_c` of the record, depending on the unique key location (core or custom table). In general a query would always look like the following example: `select <id or id_c> from <tablename> where <external key field> = ?` but there could be exceptions where joins and more complex queries are required
 - The `sugar_key_field` config option could seem redundant, given that the sql query needs to be configured as well. In reality the `sugar_key_field` is used to make sure that the `external_key` value is set on the `sugar_key_field` field on the relevant object, so that it can be used later on for lookups leveraging the `sql_query` provided. The code will work also WITHOUT configuring `sugar_key_field`, but ONLY IF the external_key passed to the API as payload, matches the destination field where the external key will be stored in Sugar
 - SQL queries lookups leverage prepared statements, so the question mark symbol `?` is required on the SQL syntax on `config_override.php`
-- The system can be extended with its own hooks (before save and after save) when using the custom API (so no application logic hooks needed). The available config keys are `custom_before_save` and `custom_after_save`
+- Best practice is to use an additional unique key field, with additional indexes (not the Sugar guid id field). If it is required to use the Sugar guid id field, leverage Sugar generated guids to populate the records correctly and not some other strings
+- The system can be extended with its own hooks (before save and after save) when using the custom API (so no application logic hooks needed). The available config keys are `custom_before_save` and `custom_after_save`. The options that can be set are the `file` and the `class`. The method that will be called are either: `callCustomBeforeSave` or `callCustomAfterSave`
 - To improve performance the activity stream record creation has been disabled when using the bulk API
 - To improve performance further (and reduce server utilisation), make sure Elastic indexing does not happen synchronously with the config_override option provided `$sugar_config['search_engine']['force_async_index'] = true;`
 - It is possible to upsert one record at the time only, by passing an array of records with only one record on the array. It is not recommended, as higher throughput can be achieved by passing multiple records
@@ -83,7 +80,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 
 ```
 {
-  "records":[
+    "records":[
     {
         "first_name":"Test1",
         "last_name":"Test1",
@@ -102,7 +99,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 #### Accounts (/rest/v10/BulkImport/records/Accounts)
 ```
 {
-  "records":[
+    "records":[
     {
         "name":"a1",
         "external_key":"1"
@@ -118,7 +115,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 #### Contacts (/rest/v10/BulkImport/records/Contacts)
 ```
 {
-  "records":[
+    "records":[
     {
         "first_name":"c1",
         "last_name":"c1",
@@ -137,7 +134,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 #### Accounts Contacts relationships (/rest/v10/BulkImport/relationships/Accounts/contacts)
 ```
 {
-  "records":[
+    "records":[
     {
         "left_external_key":"1",
         "right_external_key":"2"
@@ -153,15 +150,15 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 #### Cases (/rest/v10/BulkImport/records/Cases)
 ```
 {
-  "skipUpdate":true,
-  "records":[
+    "skipUpdate":true,
+    "records":[
     {
         "name":"c1",
-        "external_key":"aaa-bbb-ccc-ddd-eee-1"
+        "external_key":"47fee372-b195-11e8-83be-06cd403c41f6"
     },
     {
         "name":"c2",
-        "external_key":"aaa-bbb-ccc-ddd-eee-2"
+        "external_key":"47fee3a4-b195-11e8-bf63-06cd403c41f6"
     }
   ]
 }
@@ -170,13 +167,13 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 #### Cases Accounts relationships (/rest/v10/BulkImport/relationships/Cases/accounts)
 ```
 {
-  "records":[
+    "records":[
     {
-        "left_external_key":"aaa-bbb-ccc-ddd-eee-2",
+        "left_external_key":"47fee3a4-b195-11e8-bf63-06cd403c41f6",
         "right_exteranl_key":"2"
     },
     {
-        "left_external_key":"aaa-bbb-ccc-ddd-eee-1",
+        "left_external_key":"47fee372-b195-11e8-83be-06cd403c41f6",
         "right_external_key":"1"
     }
   ]
@@ -187,7 +184,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 
 ```
 {
-  "records":[
+    "records":[
     {
         "phone_office":"1234",
         "external_key":"a1"
@@ -237,15 +234,15 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 
 ```
 {
-  "skipUpdate":true,
-  "records":[
+    "skipUpdate":true,
+    "records":[
     {
         "name":"c1",
-        "id":"aaa-bbb-ccc-ddd-eee-1"
+        "id":"47fee372-b195-11e8-83be-06cd403c41f6"
     },
     {
         "name":"c2",
-        "id":"aaa-bbb-ccc-ddd-eee-2"
+        "id":"47fee3a4-b195-11e8-bf63-06cd403c41f6"
     }
   ]
 }
@@ -258,12 +255,12 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
   "list": {
     "created": [
       {
-        "external_key": "aaa-bbb-ccc-ddd-eee-1",
-        "sugar_id": "aaa-bbb-ccc-ddd-eee-1"
+        "external_key": "47fee372-b195-11e8-83be-06cd403c41f6",
+        "sugar_id": "47fee372-b195-11e8-83be-06cd403c41f6"
       },
       {
-        "external_key": "aaa-bbb-ccc-ddd-eee-2",
-        "sugar_id": "aaa-bbb-ccc-ddd-eee-2"
+        "external_key": "47fee3a4-b195-11e8-bf63-06cd403c41f6",
+        "sugar_id": "47fee3a4-b195-11e8-bf63-06cd403c41f6"
       }
     ]
   }
@@ -277,13 +274,13 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
   "list": {
     "warnings": [
       {
-        "external_key": "aaa-bbb-ccc-ddd-eee-1",
-        "sugar_id": "aaa-bbb-ccc-ddd-eee-1",
+        "external_key": "47fee372-b195-11e8-83be-06cd403c41f6",
+        "sugar_id": "47fee372-b195-11e8-83be-06cd403c41f6",
         "message": "Module Cases update skipped as requested"
       },
       {
-        "external_key": "aaa-bbb-ccc-ddd-eee-2",
-        "sugar_id": "aaa-bbb-ccc-ddd-eee-2",
+        "external_key": "47fee3a4-b195-11e8-bf63-06cd403c41f6",
+        "sugar_id": "47fee3a4-b195-11e8-bf63-06cd403c41f6",
         "message": "Module Cases update skipped as requested"
       }
     ]
@@ -295,13 +292,13 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 
 ```
 {
-  "records":[
+    "records":[
     {
-        "left_external_key":"aaa-bbb-ccc-ddd-eee-2",
+        "left_external_key":"47fee3a4-b195-11e8-bf63-06cd403c41f6",
         "right_external_key":"a3"
     },
     {
-        "left_external_key":"aaa-bbb-ccc-ddd-eee-1",
+        "left_external_key":"47fee372-b195-11e8-83be-06cd403c41f6",
         "right_external_key":"invalid-id"
     }
   ]
@@ -316,16 +313,16 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
   "list": {
     "related": [
       {
-        "external_key_left": "aaa-bbb-ccc-ddd-eee-2",
-        "sugar_id_left": "aaa-bbb-ccc-ddd-eee-2",
+        "external_key_left": "47fee3a4-b195-11e8-bf63-06cd403c41f6",
+        "sugar_id_left": "47fee3a4-b195-11e8-bf63-06cd403c41f6",
         "external_key_right": "a3",
         "sugar_id_right": "4b1ceac2-3ec8-11e7-8561-49cc98a30472"
       }
     ],
     "errors": [
       {
-        "external_key_left": "aaa-bbb-ccc-ddd-eee-1",
-        "sugar_id_left": "aaa-bbb-ccc-ddd-eee-1",
+        "external_key_left": "47fee372-b195-11e8-83be-06cd403c41f6",
+        "sugar_id_left": "47fee372-b195-11e8-83be-06cd403c41f6",
         "external_key_right": "invalid-id",
         "sugar_id_right": ""
       }

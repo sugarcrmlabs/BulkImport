@@ -641,10 +641,8 @@ class BulkImport
             $sugar_config['bulk_import_settings']['modules']['Users']['sql_query'] = "select id_c from users_cstm where ext_key_c = ?";
             $sugar_config['bulk_import_settings']['modules']['Users']['custom_before_save']['file'] = 'custom/modules/Users/UsersBulkImport.php';
             $sugar_config['bulk_import_settings']['modules']['Users']['custom_before_save']['class'] = 'UsersBulkImport';
-            $sugar_config['bulk_import_settings']['modules']['Users']['custom_before_save']['method'] = 'usersBeforeSave';
             $sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['file'] = 'custom/modules/Users/UsersBulkImport.php';
             $sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['class'] = 'UsersBulkImport';
-            $sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['method'] = 'usersAfterSave';
             $sugar_config['bulk_import_settings']['modules']['Accounts']['sugar_key_field'] = 'ext_key_c';
             $sugar_config['bulk_import_settings']['modules']['Accounts']['external_key_field'] = 'external_key';
             $sugar_config['bulk_import_settings']['modules']['Accounts']['sql_query'] = "select id_c from accounts_cstm where ext_key_c = ?";
@@ -730,25 +728,25 @@ class BulkImport
             if (
                 !empty($this->import_settings['modules'][$b->module_name]['custom_before_save']['file'])
                 && !empty($this->import_settings['modules'][$b->module_name]['custom_before_save']['class'])
-                && !empty($this->import_settings['modules'][$b->module_name]['custom_before_save']['method'])
             ) {
                 require_once($this->import_settings['modules'][$b->module_name]['custom_before_save']['file']);
 
                 $custom_class = new $this->import_settings['modules'][$b->module_name]['custom_before_save']['class'];
-                $custom_method = $this->import_settings['modules'][$b->module_name]['custom_before_save']['method'];
-                $custom_class->$custom_method($b, $data, $args);
+                if (method_exists($custom_class, 'callCustomBeforeSave')) {
+                    $custom_class->callCustomBeforeSave($b, $data, $args);
+                }
             }
         } else if ($type == 'custom_after_save') {
             if (
                 !empty($this->import_settings['modules'][$b->module_name]['custom_after_save']['file'])
                 && !empty($this->import_settings['modules'][$b->module_name]['custom_after_save']['class'])
-                && !empty($this->import_settings['modules'][$b->module_name]['custom_after_save']['method'])
             ) {
                 require_once($this->import_settings['modules'][$b->module_name]['custom_after_save']['file']);
 
                 $custom_class = new $this->import_settings['modules'][$b->module_name]['custom_after_save']['class'];
-                $custom_method = $this->import_settings['modules'][$b->module_name]['custom_after_save']['method'];
-                $custom_class->$custom_method($b, $data, $args);
+                if (method_exists($custom_class, 'callCustomAfterSave')) {
+                    $custom_class->callCustomAfterSave($b, $data, $args);
+                }
             }
         }
     }
