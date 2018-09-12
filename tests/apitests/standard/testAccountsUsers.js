@@ -23,6 +23,7 @@ describe('bulkapi', function() {
         this.userId = response.body.list.created[0].sugar_id;
 
         this.accountName = 'Account A - ' + this.random;
+        this.accountId = 'a-' + this.random
     });
 
     after(function*() {
@@ -41,7 +42,7 @@ describe('bulkapi', function() {
         this.records = [
             {
                 name: this.accountName,
-                external_key: this.accountName,
+                external_key: this.accountId,
                 external_assigned_user_key: this.userName
             }
         ];       
@@ -55,7 +56,7 @@ describe('bulkapi', function() {
         expect(response.body.count.errors).to.be.empty;
         expect(response.body.list).to.not.be.empty;
         expect(response.body.list.created).to.not.be.empty;
-        expect(response.body.list.created[0].external_key).to.be.equal(this.accountName);
+        expect(response.body.list.created[0].external_key).to.be.equal(this.accountId);
         expect(response.body.list.created[0].sugar_id).to.not.be.empty;
         expect(response.body.list.updated).to.be.empty;
 

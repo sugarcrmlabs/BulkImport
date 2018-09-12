@@ -8,6 +8,8 @@ $sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['
 $sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['class'] = 'UsersBulkImport';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['file'] = 'custom/modules/Accounts/AccountsBulkImport.php';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['class'] = 'AccountsBulkImport';
+$sugar_config['bulk_import_settings']['modules']['Accounts']['custom_after_save']['file'] = 'custom/modules/Accounts/AccountsBulkImport.php';
+$sugar_config['bulk_import_settings']['modules']['Accounts']['custom_after_save']['class'] = 'AccountsBulkImport';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['file'] = 'custom/modules/Contacts/ContactsBulkImport.php';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['class'] = 'ContactsBulkImport';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['sugar_key_field'] = 'ext_key_c';

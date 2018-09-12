@@ -23,10 +23,10 @@ $sugar_config['search_engine']['force_async_index'] = true;
 $sugar_config['bulk_import_settings']['modules']['Users']['sugar_key_field'] = 'ext_key_c';
 $sugar_config['bulk_import_settings']['modules']['Users']['external_key_field'] = 'external_key';
 $sugar_config['bulk_import_settings']['modules']['Users']['sql_query'] = 'select id_c from users_cstm where ext_key_c = ?';
-$sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['file'] = 'custom/modules/Users/UsersBulkImport.php';
-$sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['class'] = 'UsersBulkImport';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['file'] = 'custom/modules/Accounts/AccountsBulkImport.php';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['class'] = 'AccountsBulkImport';
+$sugar_config['bulk_import_settings']['modules']['Accounts']['custom_after_save']['file'] = 'custom/modules/Accounts/AccountsBulkImport.php';
+$sugar_config['bulk_import_settings']['modules']['Accounts']['custom_after_save']['class'] = 'AccountsBulkImport';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['file'] = 'custom/modules/Contacts/ContactsBulkImport.php';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['class'] = 'ContactsBulkImport';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['sugar_key_field'] = 'ext_key_c';
@@ -80,7 +80,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 
 ```
 {
-    "records":[
+  "records":[
     {
         "first_name":"Test1",
         "last_name":"Test1",
@@ -99,10 +99,12 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 #### Accounts (/rest/v10/BulkImport/records/Accounts)
 ```
 {
-    "records":[
+  "save_as_user_id":"47fed0f8-b195-11e8-9dde-06cd403c41f6",
+  "records":[
     {
         "name":"a1",
-        "external_key":"1"
+        "external_key":"1",
+        "team_list":"190743c4-b18c-11e8-973f-06cd403c41f6|1"
     },
     {
         "name":"a2",
@@ -115,7 +117,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 #### Contacts (/rest/v10/BulkImport/records/Contacts)
 ```
 {
-    "records":[
+  "records":[
     {
         "first_name":"c1",
         "last_name":"c1",
@@ -134,7 +136,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 #### Accounts Contacts relationships (/rest/v10/BulkImport/relationships/Accounts/contacts)
 ```
 {
-    "records":[
+  "records":[
     {
         "left_external_key":"1",
         "right_external_key":"2"
@@ -150,8 +152,8 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 #### Cases (/rest/v10/BulkImport/records/Cases)
 ```
 {
-    "skipUpdate":true,
-    "records":[
+  "skipUpdate":true,
+  "records":[
     {
         "name":"c1",
         "external_key":"47fee372-b195-11e8-83be-06cd403c41f6"
@@ -167,7 +169,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 #### Cases Accounts relationships (/rest/v10/BulkImport/relationships/Cases/accounts)
 ```
 {
-    "records":[
+  "records":[
     {
         "left_external_key":"47fee3a4-b195-11e8-bf63-06cd403c41f6",
         "right_exteranl_key":"2"
@@ -184,7 +186,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 
 ```
 {
-    "records":[
+  "records":[
     {
         "phone_office":"1234",
         "external_key":"a1"
@@ -234,8 +236,8 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 
 ```
 {
-    "skipUpdate":true,
-    "records":[
+  "skipUpdate":true,
+  "records":[
     {
         "name":"c1",
         "id":"47fee372-b195-11e8-83be-06cd403c41f6"
@@ -292,7 +294,7 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 
 ```
 {
-    "records":[
+  "records":[
     {
         "left_external_key":"47fee3a4-b195-11e8-bf63-06cd403c41f6",
         "right_external_key":"a3"

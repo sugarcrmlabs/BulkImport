@@ -29,6 +29,12 @@ describe('bulkapi', function() {
             'Account B - ' + this.random,
             'Account C - ' + this.random
         ];
+
+        this.ids = [
+            'a-' + this.random,
+            'b-' + this.random,
+            'c-' + this.random
+        ]
     });
 
     after(function*() {
@@ -47,7 +53,7 @@ describe('bulkapi', function() {
         this.records = [
             {
                 name: this.names[0],
-                external_key: this.names[0]
+                external_key: this.ids[0]
             }
         ];
 
@@ -62,7 +68,7 @@ describe('bulkapi', function() {
         expect(response.body.count.errors).to.be.empty;
         expect(response.body.list).to.not.be.empty;
         expect(response.body.list.created).to.not.be.empty;
-        expect(response.body.list.created[0].external_key).to.be.equal(this.names[0]);
+        expect(response.body.list.created[0].external_key).to.be.equal(this.ids[0]);
         expect(response.body.list.updated).to.be.empty;
         expect(response.body.list.warnings).to.be.empty;
         expect(response.body.list.errors).to.be.empty;
@@ -82,11 +88,11 @@ describe('bulkapi', function() {
         this.records = [
             {
                 name: this.names[0],
-                external_key: this.names[0]
+                external_key: this.ids[0]
             },
             {
                 name: this.names[1],
-                external_key: this.names[1]
+                external_key: this.ids[1]
             }
         ];
 
@@ -102,9 +108,9 @@ describe('bulkapi', function() {
         expect(response.body.count.errors).to.be.empty;
         expect(response.body.list).to.not.be.empty;
         expect(response.body.list.created).to.not.be.empty;
-        expect(response.body.list.created[0].external_key).to.be.equal(this.names[1]);
+        expect(response.body.list.created[0].external_key).to.be.equal(this.ids[1]);
         expect(response.body.list.updated).to.not.be.empty;
-        expect(response.body.list.updated[0].external_key).to.be.equal(this.names[0]);
+        expect(response.body.list.updated[0].external_key).to.be.equal(this.ids[0]);
         expect(response.body.list.warnings).to.be.empty;
         expect(response.body.list.errors).to.be.empty;
 
@@ -131,15 +137,15 @@ describe('bulkapi', function() {
         this.records = [
             {
                 name: this.names[0],
-                external_key: this.names[0]
+                external_key: this.ids[0]
             },
             {
                 name: this.names[1],
-                external_key: this.names[1]
+                external_key: this.ids[1]
             },
             {
                 name: this.names[2],
-                external_key: this.names[2]
+                external_key: this.ids[2]
             }
         ];
 
@@ -155,10 +161,10 @@ describe('bulkapi', function() {
         expect(response.body.count.errors).to.be.empty;
         expect(response.body.list).to.not.be.empty;
         expect(response.body.list.created).to.not.be.empty;
-        expect(response.body.list.created[0].external_key).to.be.equal(this.names[2]);
+        expect(response.body.list.created[0].external_key).to.be.equal(this.ids[2]);
         expect(response.body.list.updated).to.not.be.empty;
-        expect(response.body.list.updated[0].external_key).to.be.equal(this.names[0]);
-        expect(response.body.list.updated[1].external_key).to.be.equal(this.names[1]);
+        expect(response.body.list.updated[0].external_key).to.be.equal(this.ids[0]);
+        expect(response.body.list.updated[1].external_key).to.be.equal(this.ids[1]);
         expect(response.body.list.warnings).to.be.empty;
         expect(response.body.list.errors).to.be.empty;
 
@@ -190,15 +196,15 @@ describe('bulkapi', function() {
         
         this.records = [
             {
-                external_key: this.names[0],
+                external_key: this.ids[0],
                 deleted: true
             },
             {
-                external_key: this.names[1],
+                external_key: this.ids[1],
                 deleted: true
             },
             {
-                external_key: this.names[2],
+                external_key: this.ids[2],
                 deleted: true
             }
         ];
@@ -215,9 +221,9 @@ describe('bulkapi', function() {
         expect(response.body.list).to.not.be.empty;
         expect(response.body.list.created).to.be.empty;
         expect(response.body.list.updated).to.not.be.empty;
-        expect(response.body.list.updated[0].external_key).to.be.equal(this.names[0]);
-        expect(response.body.list.updated[1].external_key).to.be.equal(this.names[1]);
-        expect(response.body.list.updated[2].external_key).to.be.equal(this.names[2]);
+        expect(response.body.list.updated[0].external_key).to.be.equal(this.ids[0]);
+        expect(response.body.list.updated[1].external_key).to.be.equal(this.ids[1]);
+        expect(response.body.list.updated[2].external_key).to.be.equal(this.ids[2]);
         expect(response.body.list.warnings).to.be.empty;
         expect(response.body.list.errors).to.be.empty;
     });
