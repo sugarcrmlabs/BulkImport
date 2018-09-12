@@ -153,7 +153,6 @@ class BulkImport
         if (!$this->isPassedArrayFullyEmpty($record)) {
  
             $external_key_field = $this->getExternalKeyFieldForModule($bean->module_name);
-            $sugar_key_field = $this->getSugarKeyFieldForModule($bean->module_name);
 
             if (!empty($external_key_field) && !empty($record[$external_key_field])) {
                 // retrieve the record
@@ -165,9 +164,9 @@ class BulkImport
                         $b = BeanFactory::getBean($args['module'], $record_id, array('deleted' => false));
 
                         // handle undelete/delete
-                        if (!$record['deleted'] && $b->deleted) {
+                        if (empty($record['deleted']) && !empty($b->deleted)) {
                             $b->mark_undeleted($b->id);
-                        } else if ($record['deleted'] && !$b->deleted) {
+                        } else if (!empty($record['deleted']) && empty($b->deleted)) {
                             $b->mark_deleted($b->id);
                         }
 
@@ -175,14 +174,9 @@ class BulkImport
                         if (!empty($record['id'])) {
                             unset($record['id']);
                         }
-  
-                        foreach ($record as $field => $value) {
-                            if (!empty($sugar_key_field) && $field == $external_key_field) {
-                                $b->$sugar_key_field = $value;
-                            } else {
-                                $b->$field = $value;
-                            }
-                        }
+
+                        // populate bean from data 
+                        $this->populateBeanFromData($b, $record); 
                        
                         // handle additional mapping before save
                         $this->handleAdditionalMappingBeforeSave($b, $record, $args);
@@ -227,14 +221,9 @@ class BulkImport
                     // for now a clean bean for each new record
                     $b = BeanFactory::newBean($args['module']);
 
-                    foreach ($record as $field => $value) {
-                        if (!empty($sugar_key_field) && $field == $external_key_field) {
-                            $b->$sugar_key_field = $value;
-                        } else {
-                            $b->$field = $value;
-                        }
-                    }
-
+                    // populate bean from data 
+                    $this->populateBeanFromData($b, $record); 
+ 
                     // handle setting of sugar id if required
                     if (!empty($b->id)) {
                         $b->new_with_id = true;
@@ -381,6 +370,31 @@ class BulkImport
                 ' Right key: ' . $record[$external_rel_keys['external_key_field_right']] .
                 ' Right id: ' . $sugar_id_right
             );
+        }
+    }
+
+    /**
+     * Populate bean from passed data fields
+     * @param SugarBean $bean
+     * @param array $data
+     */
+    protected function populateBeanFromData($bean, $data)
+    {
+        if (!empty($data) && !empty($bean)) {
+
+            $sugar_key_field = $this->getSugarKeyFieldForModule($bean->module_name);
+            $external_key_field = $this->getExternalKeyFieldForModule($bean->module_name);
+
+            foreach ($data as $field => $value) {
+                if (!empty($sugar_key_field) && $field == $external_key_field) {
+                    $bean->$sugar_key_field = $value;
+                } else {
+                    // store it if it is not a link field
+                    if (empty($bean->field_defs[$field]) || $bean->field_defs[$field]['type'] != 'link') {
+                        $bean->$field = $value;
+                    }
+                }
+            }
         }
     }
 
