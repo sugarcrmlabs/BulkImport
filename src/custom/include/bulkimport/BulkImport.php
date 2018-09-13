@@ -182,7 +182,7 @@ class BulkImport
                         $this->handleAdditionalMappingBeforeSave($b, $record, $args);
 
                         try {
-                            $b->save();
+                            $b->save(false);
                             $this->addToResponseArray('updated',
                                 array(
                                     array(
@@ -233,7 +233,7 @@ class BulkImport
                     $this->handleAdditionalMappingBeforeSave($b, $record, $args);
 
                     try {
-                        $b->save();
+                        $b->save(false);
                         $this->addToResponseArray('created',
                             array(
                                 array(
