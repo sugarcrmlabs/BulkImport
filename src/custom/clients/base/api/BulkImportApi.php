@@ -105,6 +105,8 @@ class BulkImportApi extends SugarApi
 
         // disable activity stream
         Activity::disable();
+        // pause tracker
+        TrackerManager::getInstance()->pause();
 
         $GLOBALS['log']->info('Bulk Import - resource: ' . $args['__sugar_url']);
 
