@@ -218,6 +218,18 @@ class BulkImport
                         );
                     }
                 } else {
+                    if (!empty($args['skipInsert'])) {
+                        $this->addToResponseArray('warnings',
+                            array(
+                                array(
+                                    'external_key' => $record[$external_key_field],
+                                    'sugar_id' => $record_id,
+                                    'message' => 'Module ' . $args['module'] . ' insert skipped as requested',
+                                )
+                            )
+                        );
+                        return;
+                    }
                     // for now a clean bean for each new record
                     $b = BeanFactory::newBean($args['module']);
 
