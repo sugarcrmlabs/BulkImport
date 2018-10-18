@@ -4,13 +4,8 @@ const {Agent, Fixtures} = require('@sugarcrm/thorn');
 
 describe('bulkapi', function() {
     before(function*() {
-
+        this.timeout(10000);
         this.random = parseInt(Math.random() * 999999);
-
-        this.accountnames = [
-            'Account A - ' + this.random,
-            'Account B - ' + this.random
-        ];
 
         this.contactdetails = [
             {
@@ -29,12 +24,12 @@ describe('bulkapi', function() {
 
         this.accounts = [
             {
-                external_key: this.accountnames[0],
-                name: this.accountnames[0]
+                external_key: 'aaa-' + this.random,
+                name: 'Account A - ' + this.random
             },
             {
-                external_key: this.accountnames[1],
-                name: this.accountnames[1]
+                external_key: 'bbb-' + this.random,
+                name: 'Account B - ' + this.random 
             }
         ];
 
@@ -49,34 +44,32 @@ describe('bulkapi', function() {
         expect(response.body.count.errors).to.be.empty;
         expect(response.body.list).to.not.be.empty;
         expect(response.body.list.created).to.not.be.empty;
-        expect(response.body.list.created[0].external_key).to.be.equal(this.accountnames[0]);
-        expect(response.body.list.created[1].external_key).to.be.equal(this.accountnames[1]);
+        expect(response.body.list.created[0].external_key).to.be.equal(this.accounts[0].external_key);
+        expect(response.body.list.created[1].external_key).to.be.equal(this.accounts[1].external_key);
         expect(response.body.list.created[0].sugar_id).to.be.not.empty;
         expect(response.body.list.created[1].sugar_id).to.be.not.empty;
         expect(response.body.list.updated).to.be.empty;
         expect(response.body.list.warnings).to.be.empty;
         expect(response.body.list.errors).to.be.empty;
-
-        this.accountId1 = response.body.list.created[0].sugar_id;
-        this.accountId2 = response.body.list.created[1].sugar_id;
     });
 
     after(function*() {
-        let response = yield Agent.as(Agent.ADMIN).delete('Accounts/' + this.accountId1);
+        this.timeout(10000);
+        let response = yield Agent.as(Agent.ADMIN).delete('Accounts/' + this.accounts[0].external_key);
 
         expect(response).to.have.status(200);
         expect(response).to.be.an('object');
         expect(response).to.not.be.empty;
         expect(response.body.id).to.not.be.empty;
-        expect(response.body.id).to.be.equal(this.accountId1);
+        expect(response.body.id).to.be.equal(this.accounts[0].external_key);
 
-        response = yield Agent.as(Agent.ADMIN).delete('Accounts/' + this.accountId2);
+        response = yield Agent.as(Agent.ADMIN).delete('Accounts/' + this.accounts[1].external_key);
 
         expect(response).to.have.status(200);
         expect(response).to.be.an('object');
         expect(response).to.not.be.empty;
         expect(response.body.id).to.not.be.empty;
-        expect(response.body.id).to.be.equal(this.accountId2);
+        expect(response.body.id).to.be.equal(this.accounts[1].external_key);
 
         response = yield Agent.as(Agent.ADMIN).delete('Contacts/' + this.contactdetails[0].id);
 
@@ -152,11 +145,11 @@ describe('bulkapi', function() {
         this.relationships = [
             {
                 left_external_key: this.contactdetails[0].id,
-                right_external_key: this.accountnames[0]
+                right_external_key: this.accounts[0].external_key
             },
             {
                 left_external_key: this.contactdetails[1].id,
-                right_external_key: this.accountnames[1]
+                right_external_key: this.accounts[1].external_key
             }
         ];
 
@@ -173,21 +166,21 @@ describe('bulkapi', function() {
         expect(response.body.list.related[1].external_key_left).to.be.equal(this.contactdetails[1].id);
         expect(response.body.list.related[0].sugar_id_left).to.be.equal(this.contactdetails[0].id);
         expect(response.body.list.related[1].sugar_id_left).to.be.equal(this.contactdetails[1].id);
-        expect(response.body.list.related[0].external_key_right).to.be.equal(this.accountnames[0]);
-        expect(response.body.list.related[1].external_key_right).to.be.equal(this.accountnames[1]);
-        expect(response.body.list.related[0].sugar_id_right).to.be.equal(this.accountId1);
-        expect(response.body.list.related[1].sugar_id_right).to.be.equal(this.accountId2);
+        expect(response.body.list.related[0].external_key_right).to.be.equal(this.accounts[0].external_key);
+        expect(response.body.list.related[1].external_key_right).to.be.equal(this.accounts[1].external_key);
+        expect(response.body.list.related[0].sugar_id_right).to.be.equal(this.accounts[0].external_key);
+        expect(response.body.list.related[1].sugar_id_right).to.be.equal(this.accounts[1].external_key);
         expect(response.body.list.errors).to.be.empty;
 
         // swap the relationships
         this.relationships = [
             {
                 left_external_key: this.contactdetails[0].id,
-                right_external_key: this.accountnames[1]
+                right_external_key: this.accounts[1].external_key
             },
             {
                 left_external_key: this.contactdetails[1].id,
-                right_external_key: this.accountnames[0]
+                right_external_key: this.accounts[0].external_key
             }
         ];
 
@@ -204,17 +197,17 @@ describe('bulkapi', function() {
         expect(response.body.list.related[1].external_key_left).to.be.equal(this.contactdetails[1].id);
         expect(response.body.list.related[0].sugar_id_left).to.be.equal(this.contactdetails[0].id);
         expect(response.body.list.related[1].sugar_id_left).to.be.equal(this.contactdetails[1].id);
-        expect(response.body.list.related[0].external_key_right).to.be.equal(this.accountnames[1]);
-        expect(response.body.list.related[1].external_key_right).to.be.equal(this.accountnames[0]);
-        expect(response.body.list.related[0].sugar_id_right).to.be.equal(this.accountId2);
-        expect(response.body.list.related[1].sugar_id_right).to.be.equal(this.accountId1);
+        expect(response.body.list.related[0].external_key_right).to.be.equal(this.accounts[1].external_key);
+        expect(response.body.list.related[1].external_key_right).to.be.equal(this.accounts[0].external_key);
+        expect(response.body.list.related[0].sugar_id_right).to.be.equal(this.accounts[1].external_key);
+        expect(response.body.list.related[1].sugar_id_right).to.be.equal(this.accounts[0].external_key);
         expect(response.body.list.errors).to.be.empty;
     });
 
     it('should not relate a Contact with an incorrect Account based on the external keys, as an admin user', function*() {
         this.timeout(10000);
 
-        var non_existent_account_key = 'Account C';        
+        var non_existent_account_key = 'ccc';        
 
         this.relationships = [
             {
@@ -247,7 +240,7 @@ describe('bulkapi', function() {
         this.relationships = [
             {
                 left_external_key: non_existent_contact_key,
-                right_external_key: this.accountnames[0]
+                right_external_key: this.accounts[0].external_key
             }
         ];
 
@@ -263,8 +256,8 @@ describe('bulkapi', function() {
         expect(response.body.list.errors).to.not.be.empty;
         expect(response.body.list.errors[0].external_key_left).to.be.equal(non_existent_contact_key);
         expect(response.body.list.errors[0].sugar_id_left).to.be.equal('');
-        expect(response.body.list.errors[0].external_key_right).to.be.equal(this.accountnames[0]);
-        expect(response.body.list.errors[0].sugar_id_right).to.be.equal(this.accountId1);
+        expect(response.body.list.errors[0].external_key_right).to.be.equal(this.accounts[0].external_key);
+        expect(response.body.list.errors[0].sugar_id_right).to.be.equal(this.accounts[0].external_key);
     });
 
     it('should return a mixed error and success relationship response, when not all related records exist based on the external keys, as an admin user', function*() {
@@ -276,11 +269,11 @@ describe('bulkapi', function() {
         this.relationships = [
             {
                 left_external_key: non_existent_contact_key,
-                right_external_key: this.accountnames[0]
+                right_external_key: this.accounts[0].external_key
             },
             {
                 left_external_key: this.contactdetails[1].id,
-                right_external_key: this.accountnames[1]
+                right_external_key: this.accounts[1].external_key
             }
         ];
 
@@ -296,13 +289,13 @@ describe('bulkapi', function() {
         expect(response.body.list.related).to.not.be.empty;
         expect(response.body.list.related[0].external_key_left).to.be.equal(this.contactdetails[1].id);
         expect(response.body.list.related[0].sugar_id_left).to.be.equal(this.contactdetails[1].id);
-        expect(response.body.list.related[0].external_key_right).to.be.equal(this.accountnames[1]);
-        expect(response.body.list.related[0].sugar_id_right).to.be.equal(this.accountId2);
+        expect(response.body.list.related[0].external_key_right).to.be.equal(this.accounts[1].external_key);
+        expect(response.body.list.related[0].sugar_id_right).to.be.equal(this.accounts[1].external_key);
         expect(response.body.list.errors).to.not.be.empty;
         expect(response.body.list.errors[0].external_key_left).to.be.equal(non_existent_contact_key);
         expect(response.body.list.errors[0].sugar_id_left).to.be.equal('');
-        expect(response.body.list.errors[0].external_key_right).to.be.equal(this.accountnames[0]);
-        expect(response.body.list.errors[0].sugar_id_right).to.be.equal(this.accountId1);
+        expect(response.body.list.errors[0].external_key_right).to.be.equal(this.accounts[0].external_key);
+        expect(response.body.list.errors[0].sugar_id_right).to.be.equal(this.accounts[0].external_key);
 
         // second side
         var non_existent_account_key = 'ddd-ddd-ddd-ddd';        
@@ -314,7 +307,7 @@ describe('bulkapi', function() {
             },
             {
                 left_external_key: this.contactdetails[1].id,
-                right_external_key: this.accountnames[1]
+                right_external_key: this.accounts[1].external_key
             }
         ];
 
@@ -330,8 +323,8 @@ describe('bulkapi', function() {
         expect(response.body.list.related).to.not.be.empty;
         expect(response.body.list.related[0].external_key_left).to.be.equal(this.contactdetails[1].id);
         expect(response.body.list.related[0].sugar_id_left).to.be.equal(this.contactdetails[1].id);
-        expect(response.body.list.related[0].external_key_right).to.be.equal(this.accountnames[1]);
-        expect(response.body.list.related[0].sugar_id_right).to.be.equal(this.accountId2);
+        expect(response.body.list.related[0].external_key_right).to.be.equal(this.accounts[1].external_key);
+        expect(response.body.list.related[0].sugar_id_right).to.be.equal(this.accounts[1].external_key);
         expect(response.body.list.errors).to.not.be.empty;
         expect(response.body.list.errors[0].external_key_left).to.be.equal(this.contactdetails[0].id);
         expect(response.body.list.errors[0].sugar_id_left).to.be.equal(this.contactdetails[0].id);

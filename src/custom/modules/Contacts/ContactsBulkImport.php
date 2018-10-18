@@ -7,7 +7,7 @@ require_once('custom/include/bulkimport/BulkImport.php');
 
 class ContactsBulkImport extends BulkImport
 {
-    public function contactsBeforeSave($b, $data, $args)
+    public function callCustomBeforeSave($b, $data, $args)
     {
         if(!empty($data['external_assigned_user_key'])) {
             $sugar_id = $this->getSugarRecordId(BeanFactory::getBean('Users'), $data['external_assigned_user_key']);
