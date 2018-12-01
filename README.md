@@ -182,6 +182,71 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 }
 ```
 
+#### Documents (/rest/v10/BulkImport/records/Documents)
+```
+{
+  "records":[
+    {
+        "document_name": "document.pdf",
+        "external_key":"1",
+        "doc_type":"Sugar",
+        "active_date": "2018-11-23",
+        "exp_date": "2020-12-31"
+    },
+    {
+        "document_name":"d2.jpg",
+        "doc_type":"Externalr",
+        "doc_url":"https://location/d2.jpg",
+        "external_key":"2"
+
+    }
+  ]
+}
+
+```
+
+#### Documents Accounts relationships (/rest/v10/BulkImport/relationships/Documents/accounts)
+```
+{
+  "records":[
+    {
+        "left_external_key":"1",
+        "right_external_key":"2"
+    },
+    {
+        "left_external_key":"2",
+        "right_external_key":"1"
+    }
+  ]
+}
+```
+
+### Notes on Documents
+
+The API doesn't support loading document records directly. Rather for performance reasons we create the Document record and required version. This allows for fast processing when large amounts of Document records need to be migrated.
+
+The API response includes the revision ID which will need to be used to rename the source file. This file needs to be placed in the upload directory of the instance at which time it will be available in the CRM instance
+
+For On-Premise installations these files can be copied directly to the upload directory via terminal commands or FTP.
+
+For On-Demand installations there are 2 methods for transferring the actual Document files.
+
+1. For moderate numbers and sizes of files using one or more module loader packages is a convenient method to transfer the files. Note that each package compressed zip would have to be limited to the upload file max size of the instance. Typically this value is 32MB [See knowledge base for reference](http://support.sugarcrm.com/Knowledge_Base/Troubleshooting/Troubleshooting_Uploading_Large_Files/).
+See example below for manifest and [see this page](http://support.sugarcrm.com/Documentation/Sugar_Developer/Sugar_Developer_Guide_8.0/Cookbook/Module_Loadable_Packages/) for more info on creating a module loader package.
+```
+ 'copy' => array(
+        array(
+            'from' => '<basepath>/upload/9004c6aa-f5b0-11e8-a96f-acbc32d13b5b',
+            'to' => 'upload/9004c6aa-f5b0-11e8-a96f-acbc32d13b5b'
+        ),
+
+    ),
+```
+
+2. Alternatively, you could create a support ticket with SugarCRM to allow for uploading the documents to an FTP site. Note the files will still need to be in one folder with all the files stored in their Document GUID format. Additionally, this method should not be used for ongoing integrations but only or initial migrations for new instances.
+
+For Documents that are stored outside of the CRM please pass the parameter 'doc_url' with the url of the Document record and include the parameter 'doc_type' to be some value other than 'Sugar'.
+
 #### Mixed response. Successful create, successful update and an error
 
 ```
