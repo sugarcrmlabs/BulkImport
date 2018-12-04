@@ -29,16 +29,6 @@ class DocumentsBulkImport extends BulkImport
             $b->id = Uuid::uuid1();
         }
 
-        // Allow for updating date modified and date entered
-        if (isset($data['date_modified'])) {
-            $b->update_date_modified = false;
-            $b->setModifiedDate($data['date_modified']);
-        }
-
-        if (isset($data['date_entered'])) {
-            $b->update_date_entered = true;
-            $b->date_entered = $data['date_entered'];
-        }
 
         // Assign using external ID. To work the config settings for Users
         // must also be set. Default to user->id = 1
@@ -67,6 +57,7 @@ class DocumentsBulkImport extends BulkImport
             unset($b->external_created_user_key);
 
             if(!empty($sugar_id)) {
+                $b->set_created_by = true;
                 $b->created_by = $sugar_id;
             } else {
                 $b->created_by = 1;
@@ -83,6 +74,7 @@ class DocumentsBulkImport extends BulkImport
             unset($b->external_modified_user_key);
 
             if(!empty($sugar_id)) {
+                $b->update_modified_by = true;
                 $b->modified_user_id = $sugar_id;
             } else {
                 $b->modified_user_id = 1;
