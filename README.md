@@ -232,7 +232,7 @@ For On-Premise installations these files can be copied directly to the upload di
 For On-Demand installations there are 2 methods for transferring the actual Document files.
 
 1. For moderate numbers and sizes of files using one or more module loader packages is a convenient method to transfer the files. Note that each package compressed zip would have to be limited to the upload file max size of the instance. Typically this value is 32MB [See knowledge base for reference](http://support.sugarcrm.com/Knowledge_Base/Troubleshooting/Troubleshooting_Uploading_Large_Files/).
-See example below for manifest and [see this page](http://support.sugarcrm.com/Documentation/Sugar_Developer/Sugar_Developer_Guide_8.0/Cookbook/Module_Loadable_Packages/) for more info on creating a module loader package.
+See example below for manifest and [see this page]( http://support.sugarcrm.com/SmartLinks/Developer_Guide/Cookbook/Module_Loadable_Packages) for more info on creating a module loader package.
 ```
  'copy' => array(
         array(
@@ -243,7 +243,7 @@ See example below for manifest and [see this page](http://support.sugarcrm.com/D
     ),
 ```
 
-2. Alternatively, you could create a support ticket with SugarCRM to allow for uploading the documents to an FTP site. Note the files will still need to be in one folder with all the files stored in their Document GUID format. Additionally, this method should not be used for ongoing integrations but only or initial migrations for new instances.
+2. Alternatively, you could create a support ticket with SugarCRM to allow for uploading the documents to an FTP site. Note the files will still need to be in one folder with all the files stored in their Document GUID format. Additionally, this method should not be used for ongoing integrations but only for initial migrations for new instances.
 
 For Documents that are stored outside of the CRM please pass the parameter 'doc_url' with the url of the Document record and include the parameter 'doc_type' to be some value other than 'Sugar'.
 
