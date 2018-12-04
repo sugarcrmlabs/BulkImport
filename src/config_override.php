@@ -20,10 +20,6 @@ $sugar_config['bulk_import_settings']['modules']['Contacts']['external_key_field
 $sugar_config['bulk_import_settings']['modules']['Contacts']['sql_query'] = 'select id_c from contacts_cstm where ext_key_c = ?';
 $sugar_config['bulk_import_settings']['relationships']['Contacts']['accounts']['external_key_field_left'] = 'left_external_key';
 $sugar_config['bulk_import_settings']['relationships']['Contacts']['accounts']['external_key_field_right'] = 'right_external_key';
-$sugar_config['bulk_import_settings']['modules']['Users']['sugar_key_field'] = 'ext_key_c';
-            $sugar_config['bulk_import_settings']['modules']['Users']['external_key_field'] = 'external_key';
-            $sugar_config['bulk_import_settings']['modules']['Users']['sql_query'] = "select id_c from users_cstm where ext_key_c = ?";
-
 $sugar_config['bulk_import_settings']['modules']['Documents']['sql_query'] = 'select id_c from documents_cstm where ext_key_c = ?';
 $sugar_config['bulk_import_settings']['modules']['Documents']['sugar_key_field'] = 'ext_key_c';
 $sugar_config['bulk_import_settings']['modules']['Documents']['external_key_field'] = 'external_key';
