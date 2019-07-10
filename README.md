@@ -1,6 +1,6 @@
 # BulkImport Upsert API
 
-The goal of this sample code is to be able to quickly create and/or update big amounts of data, by leveraging only REST API for integration and initial data load purposes for on-site implementations.<br />
+The goal of this sample code is to be able to quickly create and/or update big amounts of data, by leveraging only REST API for integration and initial data load purposes.<br />
 The code implements a POST based Bulk Upsert API for Sugar, that completes SQL lookups based on external system's unique keys and inserts or updates (upserts) multiple beans per HTTP request at once.
 
 Please note that this sample code is not provided as an installable module, as extensive configuration is required (including creation of external data key fields) on a case by case scenario.
