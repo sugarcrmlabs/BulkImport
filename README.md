@@ -18,26 +18,24 @@ Please note that this sample code is not provided as an installable module, as e
 
 ### Sample config_override.php
 ```
-$sugar_config['search_engine']['force_async_index'] = true;
-
 $sugar_config['bulk_import_settings']['modules']['Users']['sugar_key_field'] = 'ext_key_c';
 $sugar_config['bulk_import_settings']['modules']['Users']['external_key_field'] = 'external_key';
 $sugar_config['bulk_import_settings']['modules']['Users']['sql_query'] = 'select id_c from users_cstm where ext_key_c = ?';
-$sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['file'] = 'custom/modules/Accounts/AccountsBulkImport.php';
-$sugar_config['bulk_import_settings']['modules']['Accounts']['custom_before_save']['class'] = 'AccountsBulkImport';
-$sugar_config['bulk_import_settings']['modules']['Accounts']['custom_after_save']['file'] = 'custom/modules/Accounts/AccountsBulkImport.php';
-$sugar_config['bulk_import_settings']['modules']['Accounts']['custom_after_save']['class'] = 'AccountsBulkImport';
-$sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['file'] = 'custom/modules/Contacts/ContactsBulkImport.php';
-$sugar_config['bulk_import_settings']['modules']['Contacts']['custom_before_save']['class'] = 'ContactsBulkImport';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['sugar_key_field'] = 'ext_key_c';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['external_key_field'] = 'external_key';
 $sugar_config['bulk_import_settings']['modules']['Accounts']['sql_query'] = 'select id_c from accounts_cstm where ext_key_c = ?';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['sugar_key_field'] = 'ext_key_c';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['external_key_field'] = 'external_key';
 $sugar_config['bulk_import_settings']['modules']['Contacts']['sql_query'] = 'select id_c from contacts_cstm where ext_key_c = ?';
-$sugar_config['bulk_import_settings']['relationships']['Contacts']['accounts']['external_key_field_left'] = 'left_external_key';
-$sugar_config['bulk_import_settings']['relationships']['Contacts']['accounts']['external_key_field_right'] = 'right_external_key';
-
+$sugar_config['bulk_import_settings']['relationships']['Accounts']['contacts']['external_key_field_left'] = 'left_external_key';
+$sugar_config['bulk_import_settings']['relationships']['Accounts']['contacts']['external_key_field_right'] = 'right_external_key';
+$sugar_config['bulk_import_settings']['modules']['Documents']['sql_query'] = 'select id_c from documents_cstm where ext_key_c = ?';
+$sugar_config['bulk_import_settings']['modules']['Documents']['sugar_key_field'] = 'ext_key_c';
+$sugar_config['bulk_import_settings']['modules']['Documents']['external_key_field'] = 'external_key';
+$sugar_config['bulk_import_settings']['modules']['Documents']['custom_before_save']['file'] = 'custom/modules/Documents/DocumentsBulkImport.php';
+$sugar_config['bulk_import_settings']['modules']['Documents']['custom_before_save']['class'] = 'DocumentsBulkImport';
+$sugar_config['bulk_import_settings']['relationships']['Documents']['accounts']['external_key_field_left'] = 'left_external_key';
+$sugar_config['bulk_import_settings']['relationships']['Documents']['accounts']['external_key_field_right'] = 'right_external_key';
 ```
 
 ### config_override.php options explanation
@@ -73,6 +71,11 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 - Do not pass too many records at once to the API. Make sure every HTTP response does not take more than 15-20 seconds and monitor carefully the overall infrastructure load and the API response times
 - A maximum amount of records is configured by default to 100. It can be configured through the `config_override.php` option `$sugar_config['bulk_import_settings']['max_records']`
 - It is possible to impersonate another user for all the updates of the same request by passing on the payload the parameter `save_as_user_id` as the relevant user's guid
+- For every record, it is possible to pass the list of its team guids separated by `|` with no added spaces on the field `team_list`. The first team in the list will be the primary Team. This functionality will only work correctly if all the Teams with the matching guids exist within the instance
+- For every record, it is possible to populate `date_modified` and `date_entered`, as long as the date formats are correct (database format in GMT eg:`2013-02-27 19:56:00`)
+- For every record, it is possible to populate `modified_user_id`, `created_by`, or based on external keys lookup with `external_modified_user_key`, `external_created_user_key` provided that the Users sugar guid exists and user impersonation is not active
+- For every record, it is possible to populate `assigned_user_id` or based on external keys lookup with `external_assigned_user_key` provided that the Users sugar guids exist
+
 
 ### API Call Examples
 
@@ -80,129 +83,202 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 
 ```
 {
-  "records":[
-    {
-        "first_name":"Test1",
-        "last_name":"Test1",
-        "user_name":"u24",
-        "password":"test123",
-        "email1":"test1@test.com",
-        "status":"Active",
-        "employee_status":"Active",
-        "UserType":"RegularUser",
-        "external_key":"24"
-    }
-  ]
+    "records": [
+        {
+            "id": "47fecf72-b195-11e8-a6e1-06cd403c41f6",
+            "first_name": "Test3",
+            "last_name": "Test3",
+            "user_name": "test3",
+            "password": "test123",
+            "email1": "test1@test.com",
+            "status": "Active",
+            "employee_status": "Active",
+            "UserType": "RegularUser"
+        },
+        {
+            "id": "47fed0f8-b195-11e8-9dde-06cd403c41f6",
+            "first_name": "Test2",
+            "last_name": "Test2",
+            "user_name": "test2",
+            "password": "test123",
+            "email1": "test2@test.com",
+            "status": "Active",
+            "employee_status": "Active",
+            "UserType": "RegularUser"
+        }
+    ]
+}
+```
+#### Teams (/rest/v10/BulkImport/records/Teams)
+
+```
+{
+    "records": [
+        {
+            "name": "Special Team 1",
+            "external_key": "47fed1e8-b195-11e8-ccda-06cd403c41f6"
+        },
+        {
+            "name": "Special Team 2",
+            "external_key": "47fed1e8-b195-11e8-ccdb-06cd403c41f6"
+        }
+    ]
+}
+```
+
+#### Users Teams relationships (/rest/v10/BulkImport/relationships/Teams/users)
+```
+{
+    "records": [
+        {
+            "right_external_key": "test2",
+            "left_external_key": "47fed1e8-b195-11e8-ccda-06cd403c41f6"
+        },
+        {
+            "right_external_key": "test3",
+            "left_external_key": "47fed1e8-b195-11e8-ccda-06cd403c41f6"
+        },
+        {
+            "right_external_key": "test2",
+            "left_external_key": "47fed1e8-b195-11e8-ccdb-06cd403c41f6"
+        }
+    ]
 }
 ```
 
 #### Accounts (/rest/v10/BulkImport/records/Accounts)
 ```
 {
-  "save_as_user_id":"47fed0f8-b195-11e8-9dde-06cd403c41f6",
-  "records":[
-    {
-        "name":"a1",
-        "external_key":"1",
-        "team_list":"190743c4-b18c-11e8-973f-06cd403c41f6|1"
-    },
-    {
-        "name":"a2",
-        "external_key":"2"
-    }
-  ]
+    "save_as_user_id": "47fed0f8-b195-11e8-9dde-06cd403c41f6",
+    "records": [
+        {
+            "phone_office": "1234",
+            "name": "a1",
+            "external_key": "47fed1e8-b195-11e8-bbd3-06cd403c41f6",
+            "external_assigned_user_key": "test3"
+        },
+        {
+            "phone_office": "6789",
+            "name": "a2",
+            "external_key": "47fed21a-b195-11e8-87c3-06cd403c41f6",
+            "external_assigned_user_key": "test3"
+        }
+    ]
 }
 ```
 
 #### Contacts (/rest/v10/BulkImport/records/Contacts)
 ```
 {
-  "records":[
-    {
-        "first_name":"c1",
-        "last_name":"c1",
-        "external_key":"1"
-    },
-    {
-        "first_name":"c2",
-        "last_name":"c2",
-        "external_key":"2"
-    }
-  ]
+    "records": [
+        {
+            "first_name": "c1",
+            "last_name": "c1",
+            "external_key": "47fed2b0-b195-11e8-865f-06cd403c41f6",
+            "external_assigned_user_key": "test2",
+            "date_entered": "2020-01-27 19:56:00",
+            "date_modified": "2020-01-27 20:00:00",
+            "modified_user_id": "47fed0f8-b195-11e8-9dde-06cd403c41f6",
+            "created_by": "47fed0f8-b195-11e8-9dde-06cd403c41f6",
+            "team_list": "47fed1e8-b195-11e8-ccda-06cd403c41f6|1"
+        },
+        {
+            "first_name": "c2",
+            "last_name": "c2",
+            "external_key": "47fed2d8-b195-11e8-a8e5-06cd403c41f6",
+            "external_assigned_user_key": "test2",
+            "date_entered": "2020-01-27 19:56:00",
+            "date_modified": "2020-01-27 20:00:00",
+            "modified_user_id": "47fed0f8-b195-11e8-9dde-06cd403c41f6",
+            "created_by": "47fed0f8-b195-11e8-9dde-06cd403c41f6",
+            "team_list": "47fed1e8-b195-11e8-ccda-06cd403c41f6|1"
+        }
+    ]
 }
 ```
-
 
 #### Accounts Contacts relationships (/rest/v10/BulkImport/relationships/Accounts/contacts)
 ```
 {
-  "records":[
-    {
-        "left_external_key":"1",
-        "right_external_key":"2"
-    },
-    {
-        "left_external_key":"2",
-        "right_external_key":"1"
-    }
-  ]
+    "records": [
+        {
+            "right_external_key": "47fed2b0-b195-11e8-865f-06cd403c41f6",
+            "left_external_key": "47fed1e8-b195-11e8-bbd3-06cd403c41f6"
+        },
+        {
+            "right_external_key": "47fed2d8-b195-11e8-a8e5-06cd403c41f6",
+            "left_external_key": "47fed1e8-b195-11e8-bbd3-06cd403c41f6"
+        }
+    ]
 }
 ```
 
 #### Cases (/rest/v10/BulkImport/records/Cases)
 ```
 {
-  "skipUpdate":true,
-  "records":[
-    {
-        "name":"c1",
-        "external_key":"47fee372-b195-11e8-83be-06cd403c41f6"
-    },
-    {
-        "name":"c2",
-        "external_key":"47fee3a4-b195-11e8-bf63-06cd403c41f6"
-    }
-  ]
+    "skipUpdate": true,
+    "records": [
+        {
+            "name": "case1",
+            "external_key": "47fed33c-b195-11e8-b939-06cd403c41f6",
+            "external_assigned_user_key": "test3",
+            "external_modified_user_key": "test3",
+            "external_created_user_key": "test3",
+            "date_entered": "2020-01-27 19:56:00",
+            "date_modified": "2020-01-27 20:00:00",
+            "team_list": "1|47fed1e8-b195-11e8-ccda-06cd403c41f6"
+        },
+        {
+            "name": "case2",
+            "external_key": "47fed36e-b195-11e8-b123-06cd403c41f6",
+            "external_assigned_user_key": "test2",
+            "external_modified_user_key": "test2",
+            "external_created_user_key": "test2",
+            "date_entered": "2020-01-27 19:56:00",
+            "date_modified": "2020-01-27 20:00:00",
+            "team_list": "1|47fed1e8-b195-11e8-ccda-06cd403c41f6"
+        }
+    ]
 }
 ```
 
 #### Cases Accounts relationships (/rest/v10/BulkImport/relationships/Cases/accounts)
 ```
 {
-  "records":[
-    {
-        "left_external_key":"47fee3a4-b195-11e8-bf63-06cd403c41f6",
-        "right_exteranl_key":"2"
-    },
-    {
-        "left_external_key":"47fee372-b195-11e8-83be-06cd403c41f6",
-        "right_external_key":"1"
-    }
-  ]
+    "records": [
+        {
+            "left_external_key": "47fed36e-b195-11e8-b123-06cd403c41f6",
+            "right_external_key": "47fed21a-b195-11e8-87c3-06cd403c41f6"
+        },
+        {
+            "left_external_key": "47fed33c-b195-11e8-b939-06cd403c41f6",
+            "right_external_key": "47fed1e8-b195-11e8-bbd3-06cd403c41f6"
+        }
+    ]
 }
 ```
 
 #### Documents (/rest/v10/BulkImport/records/Documents)
 ```
 {
-  "records":[
-    {
-        "document_name": "document.pdf",
-        "external_key":"1",
-        "doc_type":"Sugar",
-        "active_date": "2018-11-23",
-        "exp_date": "2020-12-31"
-    },
-    {
-        "document_name":"d2.jpg",
-        "doc_type":"Externalr",
-        "doc_url":"https://location/d2.jpg",
-        "external_key":"2"
-
-    }
-  ]
+    "records": [
+        {
+            "id": "4746a494-4e7c-11ea-9ce0-0242ac1c0005",
+            "document_name": "document.pdf",
+            "external_key": "1",
+            "doc_type": "Sugar",
+            "active_date": "2018-11-23",
+            "exp_date": "2020-12-31"
+        },
+        {
+            "id": "4748f078-4e7c-11ea-8dc6-0242ac1c0005",
+            "document_name": "d2.jpg",
+            "external_key": "2",
+            "doc_type": "External",
+            "doc_url": "https://location/d2.jpg"
+        }
+    ]
 }
-
 ```
 
 #### Documents Accounts relationships (/rest/v10/BulkImport/relationships/Documents/accounts)
@@ -211,11 +287,11 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
   "records":[
     {
         "left_external_key":"1",
-        "right_external_key":"2"
+        "right_external_key":"47fed1e8-b195-11e8-bbd3-06cd403c41f6"
     },
     {
         "left_external_key":"2",
-        "right_external_key":"1"
+        "right_external_key":"47fed21a-b195-11e8-87c3-06cd403c41f6"
     }
   ]
 }
@@ -225,27 +301,28 @@ $sugar_config['bulk_import_settings']['relationships'][<sugar module name>][<sug
 
 The API doesn't support loading document records directly. Rather for performance reasons we create the Document record and required version. This allows for fast processing when large amounts of Document records need to be migrated.
 
-The API response includes the revision ID which will need to be used to rename the source file. This file needs to be placed in the upload directory of the instance at which time it will be available in the CRM instance
+The API response includes the revision ID which will need to be used to rename the source file. This file needs to be placed in the upload directory of the instance at which time it will be available in the CRM instance. Alternatively it is possible to provide a pre-generated Sugar guid to the id field as on the above example.
 
-For On-Premise installations these files can be copied directly to the upload directory via terminal commands or FTP.
+For On-Premise installations these files can be copied directly to the upload directory via terminal commands or SFTP.
 
-For On-Demand installations there are 2 methods for transferring the actual Document files.
+For SugarCloud installations there are 2 methods for transferring the actual Document files.
 
-1. For moderate numbers and sizes of files using one or more module loader packages is a convenient method to transfer the files. Note that each package compressed zip would have to be limited to the upload file max size of the instance. Typically this value is 32MB [See knowledge base for reference](http://support.sugarcrm.com/Knowledge_Base/Troubleshooting/Troubleshooting_Uploading_Large_Files/).
+1. The recommended approach is to create a support ticket with SugarCRM to allow for uploading the documents to an FTP site. Note the files will still need to be in one folder with all the files stored in their Document GUID format. Additionally, this method should not be used for ongoing integrations but only for initial migrations for new instances.
+
+2. For moderate numbers and sizes of files using one or more module loader packages is a convenient method to transfer the files. Note that each package compressed zip would have to be limited to the upload file max size of the instance. Typically this value is 32MB [See knowledge base for reference](http://support.sugarcrm.com/Knowledge_Base/Troubleshooting/Troubleshooting_Uploading_Large_Files/).
 See example below for manifest and [see this page]( http://support.sugarcrm.com/SmartLinks/Developer_Guide/Cookbook/Module_Loadable_Packages) for more info on creating a module loader package.
 ```
  'copy' => array(
         array(
-            'from' => '<basepath>/upload/9004c6aa-f5b0-11e8-a96f-acbc32d13b5b',
-            'to' => 'upload/9004c6aa-f5b0-11e8-a96f-acbc32d13b5b'
+            'from' => '<basepath>/upload/4746a494-4e7c-11ea-9ce0-0242ac1c0005',
+            'to' => 'upload/4746a494-4e7c-11ea-9ce0-0242ac1c0005'
         ),
 
     ),
 ```
 
-2. Alternatively, you could create a support ticket with SugarCRM to allow for uploading the documents to an FTP site. Note the files will still need to be in one folder with all the files stored in their Document GUID format. Additionally, this method should not be used for ongoing integrations but only for initial migrations for new instances.
 
-For Documents that are stored outside of the CRM please pass the parameter 'doc_url' with the url of the Document record and include the parameter 'doc_type' to be some value other than 'Sugar'.
+For Documents that are stored outside of the CRM, populate the parameter `doc_url` with the url of the Document record and include the parameter 'doc_type' to be some value other than 'Sugar'.
 
 #### Mixed response. Successful create, successful update and an error
 

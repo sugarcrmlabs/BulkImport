@@ -7,7 +7,7 @@
 
 require_once('custom/include/bulkimport/BulkImport.php');
 
-if(!defined('sugarEntry') || !sugarEntry) {
+if (!defined('sugarEntry') || !sugarEntry) {
     die('Not A Valid Entry Point');
 }
 
@@ -17,26 +17,26 @@ class BulkImportApi extends SugarApi
 
     public function registerApiRest()
     {
-        return array(
-            array(
-                'reqType' => array('POST', 'PUT'),
-                'path' => array('BulkImport', 'records', '?'),
-                'pathVars' => array('', '', 'module'),
+        return [
+            [
+                'reqType' => ['POST', 'PUT'],
+                'path' => ['BulkImport', 'records', '?'],
+                'pathVars' => ['', '', 'module'],
                 'method' => 'bulkImport',
                 'minVersion' => 10,
                 //'maxVersion' => 11,
                 'shortHelp' => 'Admin Only - POST BulkImport/records/:module post a list of {"records":[]}',
-            ),
-            array(
-                'reqType' => array('POST', 'PUT'),
-                'path' => array('BulkImport', 'relationships', '?', '?'),
-                'pathVars' => array('', '', 'module', 'linkfield'),
+            ],
+            [
+                'reqType' => ['POST', 'PUT'],
+                'path' => ['BulkImport', 'relationships', '?', '?'],
+                'pathVars' => ['', '', 'module', 'linkfield'],
                 'method' => 'bulkImportRelationship',
                 'minVersion' => 10,
                 //'maxVersion' => 11,
                 'shortHelp' => 'Admin Only - POST BulkImport/relationships/:module/:linkfield post a list of {"records":[]} with left external key and right external key',
-            ),
-        );
+            ],
+        ];
     }
 
     protected function bulk() {

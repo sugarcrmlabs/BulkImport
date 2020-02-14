@@ -5,8 +5,8 @@
 
 class BulkImport
 {
-    protected $import_settings = array();
-    protected $response = array();
+    protected $import_settings = [];
+    protected $response = [];
     protected $api_user = null;
 
     /**
@@ -24,7 +24,7 @@ class BulkImport
      */
     public function getResponseArray()
     {
-        foreach (array('count', 'list') as $type) {
+        foreach (['count', 'list'] as $type) {
             foreach ($this->response[$type] as $key => $val) {
                 if (empty($val)) {
                     unset($this->response[$type][$key]);
@@ -107,7 +107,7 @@ class BulkImport
     public function handleAdditionalMappingBeforeSave($b, $data, $args)
     {
         // handle user's password hashing for the 'password' plain text field into the user_hash
-        if ($b->table_name == 'users' && !empty($data['password'])) {
+        if ($b->table_name === 'users' && !empty($data['password'])) {
             $b->user_hash = $b->getPasswordHash($data['password']);
             unset($b->password);
         }
@@ -125,16 +125,62 @@ class BulkImport
                 $b->modified_user_id = $data['modified_user_id'];
                 $b->update_modified_by = false;
             }
+
+            // handle created by overriding with external_created_user_key based on external key lookup
+            if (!empty($data['external_created_user_key'])) {
+                $sugar_id = $this->getSugarRecordId(BeanFactory::newBean('Users'), $data['external_created_user_key']);
+                unset($b->external_created_user_key);
+
+                if (!empty($sugar_id)) {
+                    $b->set_created_by = false;
+                    $b->created_by = $sugar_id;
+                }
+            }
+
+            // handle modified by overriding with external_modified_user_key based on external key lookup
+            if (!empty($data['external_modified_user_key'])) {
+                $sugar_id = $this->getSugarRecordId(BeanFactory::newBean('Users'), $data['external_modified_user_key']);
+                unset($b->external_modified_user_key);
+
+                if (!empty($sugar_id)) {
+                    $b->update_modified_by = false;
+                    $b->modified_user_id = $sugar_id;
+                }
+            }
+        }
+
+        // handle external_assigned_user_key assigned user based on external key lookup
+        if (!empty($data['external_assigned_user_key'])) {
+            $sugar_id = $this->getSugarRecordId(BeanFactory::newBean('Users'), $data['external_assigned_user_key']);
+            unset($b->external_assigned_user_key);
+
+            if (!empty($sugar_id)) {
+                $b->assigned_user_id = $sugar_id;
+            }
+        }
+
+        // if assigned user is empty, set the current user's id
+        if (empty($b->assigned_user_id)) {
+            global $current_user;
+            $b->assigned_user_id = $current_user->id;
         }
 
         // handle date entered overriding
-        if (isset($record['date_entered']) && !empty($record['date_entered'])) {
-            $b->update_date_entered = false;
+        if (isset($data['date_entered']) && !empty($data['date_entered'])) {
+            $b->update_date_entered = true;
         }
 
         // handle date modified overriding
-        if (isset($record['date_modified']) && !empty($record['date_modified'])) {
+        if (isset($data['date_modified']) && !empty($data['date_modified'])) {
             $b->update_date_modified = false;
+        }
+
+        // handle team_list | separated list of ids, first team
+        if (!empty($data['team_list'])) {
+            $teams = explode('|', trim($data['team_list'], ' |'));
+            if (!empty($teams) && is_array($teams)) {
+                $b->team_id = $teams['0'];
+            }
         }
 
         // call additional custom logic if any
@@ -161,7 +207,7 @@ class BulkImport
                 if (!empty($record_id)) {
                     if (empty($args['skipUpdate'])) {
                         // retrieve also if deleted, and undelete
-                        $b = BeanFactory::getBean($args['module'], $record_id, array('deleted' => false));
+                        $b = BeanFactory::getBean($args['module'], $record_id, ['deleted' => false]);
 
                         // handle undelete/delete
                         if (empty($record['deleted']) && !empty($b->deleted)) {
@@ -184,12 +230,12 @@ class BulkImport
                         try {
                             $b->save(false);
                             $this->addToResponseArray('updated',
-                                array(
-                                    array(
+                                [
+                                    [
                                         'external_key' => $record[$external_key_field],
                                         'sugar_id' => $b->id,
-                                    )
-                                )
+                                    ]
+                                ]
                             );
                         } catch (Exception $e) {
                             $GLOBALS['log']->error(
@@ -197,24 +243,24 @@ class BulkImport
                                 'external record key ' . $external_key_field . ': ' . $record[$external_key_field] . ' and sugar id: ' . $b->id
                             );
                             $this->addToResponseArray('errors',
-                                array(
-                                    array(
+                                [
+                                    [
                                         'external_key' => $record[$external_key_field],
                                         'sugar_id' => $b->id,
                                         'message' => 'Module ' . $args['module'] . ' update failed',
-                                    )
-                                )
+                                    ]
+                                ]
                             );
                         }
                     } else {
                         $this->addToResponseArray('warnings',
-                            array(
-                                array(
+                            [
+                                [
                                     'external_key' => $record[$external_key_field],
                                     'sugar_id' => $record_id,
                                     'message' => 'Module ' . $args['module'] . ' update skipped as requested',
-                                )
-                            )
+                                ]
+                            ]
                         );
                     }
                 } else {
@@ -235,12 +281,12 @@ class BulkImport
                     try {
                         $b->save(false);
                         $this->addToResponseArray('created',
-                            array(
-                                array(
+                            [
+                                [
                                     'external_key' => $record[$external_key_field],
                                     'sugar_id' => $b->id,
-                                )
-                            )
+                                ]
+                            ]
                         );
                     } catch (Exception $e) {
                         $GLOBALS['log']->error(
@@ -248,12 +294,12 @@ class BulkImport
                             'external record key ' . $external_key_field . ': ' . $record[$external_key_field]
                         );
                         $this->addToResponseArray('errors',
-                            array(
-                                array(
+                            [
+                                [
                                     'external_key' => $record[$external_key_field],
                                     'message' => 'Module ' . $args['module'] . ' creation of record failed',
-                                )
-                            )
+                                ]
+                            ]
                         );
                     }
                 }
@@ -265,21 +311,21 @@ class BulkImport
             } else {
                 $GLOBALS['log']->error('Bulk Import - Module ' . $args['module'] . ' key: ' .$external_key_field. ' empty');
                 $this->addToResponseArray('errors',
-                    array(
-                        array(
+                    [
+                        [
                             'message' => 'Module ' . $args['module'] . ' key: ' .$external_key_field. ' empty',
-                        )
-                    )
+                        ]
+                    ]
                 );
             }
         } else {
             // passed empty record
             $this->addToResponseArray('warnings',
-                array(
-                    array(
+                [
+                    [
                         'message' => 'Empty record passed for module ' . $args['module'],
-                    )
-                )
+                    ]
+                ]
             );
         }
     }
@@ -309,53 +355,53 @@ class BulkImport
                         // adding relationship params
                         $rel_params = $record['relationship_params'];
                     } else {
-                        $rel_params = array();
+                        $rel_params = [];
                     }
 
-                    $this->handleManyToManyRelationship($b, array(
+                    $this->handleManyToManyRelationship($b, [
                         'sugar_id_left' => $sugar_id_left,
                         'external_key_left' => $record[$external_rel_keys['external_key_field_left']],
                         'sugar_id_right' => $sugar_id_right,
                         'external_key_right' => $record[$external_rel_keys['external_key_field_right']],
                         'relationship_params' => $rel_params
-                    ), $args);
+                    ], $args);
                 } else {
                     $current_error = true;
                     $this->addToResponseArray('errors',
-                        array(
-                            array(
+                        [
+                            [
                                 'external_key_left' => $record[$external_rel_keys['external_key_field_left']],
                                 'sugar_id_left' => $sugar_id_left,
                                 'external_key_right' => $record[$external_rel_keys['external_key_field_right']],
                                 'sugar_id_right' => '',
-                            )
-                        )
+                            ]
+                        ]
                     );
                 }
             } else {
                 $current_error = true;
                 $this->addToResponseArray('errors',
-                    array(
-                        array(
+                    [
+                        [
                             'external_key_left' => $record[$external_rel_keys['external_key_field_left']],
                             'sugar_id_left' => '',
                             'external_key_right' => $record[$external_rel_keys['external_key_field_right']],
                             'sugar_id_right' => $sugar_id_right,
-                        )
-                    )
+                        ]
+                    ]
                 );
             }
         } else {
             $current_error = true;
             $this->addToResponseArray('errors',
-                array(
-                    array(
+                [
+                    [
                         'external_key_left' => $record[$external_rel_keys['external_key_field_left']],
                         'sugar_id_left' => '',
                         'external_key_right' => $record[$external_rel_keys['external_key_field_right']],
                         'sugar_id_right' => '',
-                    )
-                )
+                    ]
+                ]
             );
         }
 
@@ -386,7 +432,7 @@ class BulkImport
             $external_key_field = $this->getExternalKeyFieldForModule($bean->module_name);
 
             foreach ($data as $field => $value) {
-                if (!empty($sugar_key_field) && $field == $external_key_field) {
+                if (!empty($sugar_key_field) && $field === $external_key_field) {
                     $bean->$sugar_key_field = $value;
                 } else {
                     // store it if it is not a link field
@@ -462,7 +508,7 @@ class BulkImport
             return array_keys($this->import_settings['relationships']);
         }
         
-        return array();
+        return [];
     }
 
     /**
@@ -475,7 +521,7 @@ class BulkImport
             return array_keys($this->import_settings['relationships'][$module]);
         }
         
-        return array();
+        return [];
     }
 
     /**
@@ -489,7 +535,7 @@ class BulkImport
         // check if it is a valid module
         if (!empty($b)) {
             $query = $this->writeSQLQuery($b->module_name);
-            $stmt = $GLOBALS['db']->getConnection()->executeQuery($query, array($lookup_id));
+            $stmt = $GLOBALS['db']->getConnection()->executeQuery($query, [$lookup_id]);
             $id = $stmt->fetch();
 
             if(!empty($id)) {
@@ -509,6 +555,17 @@ class BulkImport
      */
     private function handleAdditionalMappingAfterSave($b, $data, $args)
     {
+        // handle team_list | separated list of ids
+        if (!empty($data['team_list'])) {
+            $teams = explode('|', trim($data['team_list'], ' |'));
+            if (!empty($teams) && is_array($teams)) {
+                $b->load_relationship('teams');
+                $b->teams->replace(
+                    $teams
+                );
+            }
+        }
+
         // call additional custom logic if any
         $this->callCustomLogic($b, $data, $args, 'custom_after_save');
     }
@@ -535,50 +592,50 @@ class BulkImport
                     try {
                         $b->$linkfield->add($data['sugar_id_right'], $data['relationship_params']);
                         $this->addToResponseArray('related',
-                            array(
-                                array(
+                            [
+                                [
                                     'external_key_left' => $data['external_key_left'],
                                     'sugar_id_left' => $b->id,
                                     'external_key_right' => $data['external_key_right'],
                                     'sugar_id_right' => $data['sugar_id_right'],
-                                )
-                            )
+                                ]
+                            ]
                         );
                     } catch (Exception $e) {
                         $this->addToResponseArray('errors',
-                            array(
-                                array(
+                            [
+                                [
                                     'external_key_left' => $data['external_key_left'],
                                     'sugar_id_left' => $b->id,
                                     'external_key_right' => $data['external_key_right'],
                                     'sugar_id_right' => $data['sugar_id_right'],
-                                )
-                            )
+                                ]
+                            ]
                         );
                     }
                 } else {
                     try {
                         $b->$linkfield->add($data['sugar_id_right']);
                         $this->addToResponseArray('related',
-                            array(
-                                array(
+                            [
+                                [
                                     'external_key_left' => $data['external_key_left'],
                                     'sugar_id_left' => $b->id,
                                     'external_key_right' => $data['external_key_right'],
                                     'sugar_id_right' => $data['sugar_id_right'],
-                                )
-                            )
+                                ]
+                            ]
                         );
                     } catch (Exception $e) {
                         $this->addToResponseArray('errors',
-                            array(
-                                array(
+                            [
+                                [
                                     'external_key_left' => $data['external_key_left'],
                                     'sugar_id_left' => $b->id,
                                     'external_key_right' => $data['external_key_right'],
                                     'sugar_id_right' => $data['sugar_id_right'],
-                                )
-                            )
+                                ]
+                            ]
                         );
                     }
                 }
@@ -591,20 +648,20 @@ class BulkImport
      */
     private function initiateResponseArray()
     {
-        $this->response = array();
-        $this->response['count'] = array();
+        $this->response = [];
+        $this->response['count'] = [];
         $this->response['count']['related'] = 0;
         $this->response['count']['created'] = 0;
         $this->response['count']['updated'] = 0;
         $this->response['count']['warnings'] = 0;
         $this->response['count']['errors'] = 0;
 
-        $this->response['list'] = array();
-        $this->response['list']['related'] = array();
-        $this->response['list']['created'] = array();
-        $this->response['list']['updated'] = array();
-        $this->response['list']['warnings'] = array();
-        $this->response['list']['errors'] = array();
+        $this->response['list'] = [];
+        $this->response['list']['related'] = [];
+        $this->response['list']['created'] = [];
+        $this->response['list']['updated'] = [];
+        $this->response['list']['warnings'] = [];
+        $this->response['list']['errors'] = [];
     }
 
     /**
@@ -646,27 +703,6 @@ class BulkImport
      */
     private function loadConfigSettings() {
         $this->import_settings = SugarConfig::getInstance()->get('bulk_import_settings');
-
-        /*
-            sample config options:
-
-            $sugar_config['bulk_import_settings']['modules']['Users']['sugar_key_field'] = 'ext_key_c';
-            $sugar_config['bulk_import_settings']['modules']['Users']['external_key_field'] = 'external_key';
-            $sugar_config['bulk_import_settings']['modules']['Users']['sql_query'] = "select id_c from users_cstm where ext_key_c = ?";
-            $sugar_config['bulk_import_settings']['modules']['Users']['custom_before_save']['file'] = 'custom/modules/Users/UsersBulkImport.php';
-            $sugar_config['bulk_import_settings']['modules']['Users']['custom_before_save']['class'] = 'UsersBulkImport';
-            $sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['file'] = 'custom/modules/Users/UsersBulkImport.php';
-            $sugar_config['bulk_import_settings']['modules']['Users']['custom_after_save']['class'] = 'UsersBulkImport';
-            $sugar_config['bulk_import_settings']['modules']['Accounts']['sugar_key_field'] = 'ext_key_c';
-            $sugar_config['bulk_import_settings']['modules']['Accounts']['external_key_field'] = 'external_key';
-            $sugar_config['bulk_import_settings']['modules']['Accounts']['sql_query'] = "select id_c from accounts_cstm where ext_key_c = ?";
-            $sugar_config['bulk_import_settings']['modules']['Contacts']['sugar_key_field'] = 'ext_key_c';
-            $sugar_config['bulk_import_settings']['modules']['Contacts']['external_key_field'] = 'external_key';
-            $sugar_config['bulk_import_settings']['modules']['Contacts']['sql_query'] = "select id_c from contacts_cstm where ext_key_c = ?";
-            $sugar_config['bulk_import_settings']['relationships']['Accounts']['contacts']['external_key_field_left'] = 'left_external_key';
-            $sugar_config['bulk_import_settings']['relationships']['Accounts']['contacts']['external_key_field_right'] = 'right_external_key';
-            $sugar_config['bulk_import_settings']['max_records'] = 50;
-        */
     }
 
     /**
@@ -688,7 +724,7 @@ class BulkImport
             return $this->import_settings['relationships'][$module][$linkfield];
         }
 
-        return array();
+        return [];
     }
 
     /**
@@ -738,7 +774,7 @@ class BulkImport
      * @param string $type
      */
     private function callCustomLogic($b, $data, $args, $type) {
-        if ($type == 'custom_before_save') {
+        if ($type === 'custom_before_save') {
             if (
                 !empty($this->import_settings['modules'][$b->module_name]['custom_before_save']['file'])
                 && !empty($this->import_settings['modules'][$b->module_name]['custom_before_save']['class'])
@@ -750,7 +786,7 @@ class BulkImport
                     $custom_class->callCustomBeforeSave($b, $data, $args);
                 }
             }
-        } else if ($type == 'custom_after_save') {
+        } else if ($type === 'custom_after_save') {
             if (
                 !empty($this->import_settings['modules'][$b->module_name]['custom_after_save']['file'])
                 && !empty($this->import_settings['modules'][$b->module_name]['custom_after_save']['class'])
